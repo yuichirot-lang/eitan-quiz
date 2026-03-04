@@ -170,13 +170,8 @@
     <p class="subtitle">Here We Go! 1年生</p>
 
     <div class="field">
-      <label>学年</label>
-      <select id="inp-grade">
-        <option value="">選んでください</option>
-        <option value="1年">1年</option>
-        <option value="2年">2年</option>
-        <option value="3年">3年</option>
-      </select>
+      <label>名前</label>
+      <input type="text" id="inp-name" placeholder="例：山田 太郎">
     </div>
     <div class="field">
       <label>クラス</label>
@@ -190,8 +185,8 @@
       </select>
     </div>
     <div class="field">
-      <label>名前</label>
-      <input type="text" id="inp-name" placeholder="例：山田 太郎">
+      <label>出席番号</label>
+      <input type="number" id="inp-number" min="1" max="45" placeholder="例：15">
     </div>
     <button class="btn btn-primary" id="info-next-btn" onclick="goToSelect()" disabled>次へ ▶</button>
   </div>
@@ -287,7 +282,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyXR9Uflsx8fmAm
 
 const POS_MAP = {'名':'名詞','動':'動詞','形':'形容詞','副':'副詞','代':'代名詞','前':'前置詞','接':'接続詞','冠':'冠詞','連':'連語・フレーズ','間':'間投詞'};
 
-let student = { grade: '', cls: '', name: '' };
+let student = { name: '', cls: '', number: '' };
 let selectedUnits = [];
 let quizWords = [];
 let current = 0;
@@ -296,20 +291,20 @@ let answered = false;
 let answerLog = [];
 
 // ---- 画面①：生徒情報 ----
-['inp-grade','inp-class','inp-name'].forEach(id => {
+['inp-name','inp-class','inp-number'].forEach(id => {
   document.getElementById(id).addEventListener('input', checkInfoForm);
 });
 function checkInfoForm(){
-  const g = document.getElementById('inp-grade').value;
-  const c = document.getElementById('inp-class').value;
   const n = document.getElementById('inp-name').value.trim();
-  document.getElementById('info-next-btn').disabled = !(g && c && n);
+  const c = document.getElementById('inp-class').value;
+  const num = document.getElementById('inp-number').value;
+  document.getElementById('info-next-btn').disabled = !(n && c && num);
 }
 function goToSelect(){
-  student.grade = document.getElementById('inp-grade').value;
-  student.cls   = document.getElementById('inp-class').value;
   student.name  = document.getElementById('inp-name').value.trim();
-  const badge = student.grade + ' ' + student.cls + '　' + student.name;
+  student.cls   = document.getElementById('inp-class').value;
+  student.number = document.getElementById('inp-number').value;
+  const badge = student.cls + '　' + student.number + '番　' + student.name;
   document.getElementById('student-badge').textContent = '👤 ' + badge;
   document.getElementById('result-student-badge').textContent = '👤 ' + badge;
   initUnitGrid();
@@ -503,7 +498,7 @@ function sendResult(pct, total){
 
   const payload = {
     timestamp: new Date().toLocaleString('ja-JP'),
-    grade: student.grade,
+    number: student.number,
     class: student.cls,
     name: student.name,
     units: units,
