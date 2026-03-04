@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>英単語テスト - Here We Go 1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Hiragino Sans', 'Helvetica Neue', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .container {
+    background: white;
+    border-radius: 24px;
+    padding: 32px 28px;
+    max-width: 600px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  h1 { text-align: center; color: #333; font-size: 1.6rem; margin-bottom: 6px; }
+  .subtitle { text-align: center; color: #888; font-size: 0.9rem; margin-bottom: 28px; }
+
+  /* 入力フォーム共通 */
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 0.85rem; color: #555; font-weight: 600; margin-bottom: 6px; }
+  .field input, .field select {
+    width: 100%; padding: 14px 16px;
+    border: 2px solid #e0e0e0; border-radius: 12px;
+    font-size: 1rem; color: #333;
+    transition: border-color 0.2s;
+    appearance: none; -webkit-appearance: none;
+    background: white;
+  }
+  .field input:focus, .field select:focus {
+    outline: none; border-color: #667eea;
+  }
+
+  /* 単元グリッド */
+  .unit-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;
+  }
+  .unit-btn {
+    background: #f0f4ff; border: 2px solid #dde4ff; border-radius: 12px;
+    padding: 10px 6px; text-align: center; cursor: pointer;
+    transition: all 0.2s; font-size: 0.85rem; color: #5566aa; font-weight: 600;
+  }
+  .unit-btn.selected { background: #667eea; border-color: #667eea; color: white; }
+  .unit-btn .count { display: block; font-size: 0.7rem; font-weight: 400; margin-top: 2px; opacity: 0.8; }
+
+  /* ボタン */
+  .btn {
+    display: block; width: 100%; padding: 16px;
+    border: none; border-radius: 14px;
+    font-size: 1.1rem; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; margin-top: 12px;
+  }
+  .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-secondary { background: #f5f5f5; color: #555; }
+  .btn-danger { background: #fff0f0; color: #e53935; border: 2px solid #ffcdd2; }
+
+  /* クイズヘッダー */
+  .quiz-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+  }
+  .progress-bar {
+    height: 8px; background: #eee; border-radius: 4px; margin-bottom: 20px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 4px; transition: width 0.4s ease;
+  }
+
+  /* 問題表示 */
+  .question-label { font-size: 0.85rem; color: #888; text-align: center; margin-bottom: 10px; }
+  .question-text {
+    font-size: 2rem; font-weight: 700; text-align: center; color: #222;
+    padding: 20px; background: #f8f9ff; border-radius: 16px;
+    min-height: 90px; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 10px;
+  }
+  .pos-badge {
+    display: block; background: #e8eaff; color: #667eea;
+    font-size: 0.75rem; padding: 2px 8px; border-radius: 20px;
+    width: fit-content; margin: 0 auto 20px;
+  }
+
+  /* 記述式入力 */
+  .answer-area { margin-bottom: 16px; }
+  .answer-input {
+    width: 100%; padding: 18px 20px;
+    border: 3px solid #e0e0e0; border-radius: 16px;
+    font-size: 1.4rem; text-align: center; color: #333;
+    transition: border-color 0.2s; letter-spacing: 0.05em;
+  }
+  .answer-input:focus { outline: none; border-color: #667eea; }
+  .answer-input.correct { border-color: #4caf50; background: #f1faf1; color: #2e7d32; }
+  .answer-input.wrong { border-color: #ef5350; background: #fff5f5; color: #c62828; }
+  .answer-input:disabled { cursor: default; }
+  .answer-hint { font-size: 0.75rem; color: #aaa; text-align: center; margin-top: 6px; }
+
+  /* フィードバック */
+  .feedback {
+    text-align: center; font-size: 1rem; font-weight: 700;
+    padding: 12px; border-radius: 12px; margin-bottom: 12px;
+  }
+  .feedback.correct { background: #e8f8e8; color: #2e7d32; }
+  .feedback.wrong { background: #ffeaea; color: #c62828; }
+  .correct-answer { font-size: 0.9rem; font-weight: 400; margin-top: 4px; }
+
+  /* 結果画面 */
+  .score-screen { text-align: center; }
+  .score-circle {
+    width: 140px; height: 140px; border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    margin: 0 auto 20px; box-shadow: 0 8px 30px rgba(102,126,234,0.4);
+  }
+  .score-number { font-size: 2.8rem; font-weight: 800; }
+  .score-label { font-size: 0.8rem; opacity: 0.9; }
+  .score-message { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; color: #333; }
+  .score-detail { color: #888; margin-bottom: 20px; font-size: 0.9rem; }
+
+  /* 答え一覧 */
+  .answer-list { text-align: left; margin-bottom: 20px; max-height: 260px; overflow-y: auto; }
+  .answer-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 12px; border-radius: 10px; margin-bottom: 6px; font-size: 0.9rem;
+  }
+  .answer-item.ok { background: #f1faf1; }
+  .answer-item.ng { background: #fff5f5; }
+  .answer-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .answer-item .question-word { font-weight: 600; color: #444; }
+  .answer-item .your-answer { color: #888; font-size: 0.82rem; }
+  .answer-item .correct-word { color: #2e7d32; font-size: 0.82rem; }
+
+  /* 送信状態 */
+  .sending { color: #667eea; font-size: 0.9rem; text-align: center; margin: 8px 0; }
+  .send-ok { color: #4caf50; font-size: 0.9rem; text-align: center; margin: 8px 0; }
+  .send-err { color: #ef5350; font-size: 0.9rem; text-align: center; margin: 8px 0; }
+
+  .hidden { display: none; }
+  .student-badge {
+    background: #f0f4ff; border-radius: 10px; padding: 8px 14px;
+    font-size: 0.82rem; color: #667eea; font-weight: 600;
+    text-align: center; margin-bottom: 16px;
+  }
+
+  .sub-select-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .sub-select-row button {
+    flex: 1; padding: 8px; font-size: 0.8rem; border-radius: 8px;
+    border: 1px solid #dde4ff; background: #f0f4ff; color: #667eea;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 画面①：生徒情報入力 -->
+  <div id="screen-info">
+    <h1>📚 英単語テスト</h1>
+    <p class="subtitle">Here We Go! 1年生</p>
+
+    <div class="field">
+      <label>学年</label>
+      <select id="inp-grade">
+        <option value="">選んでください</option>
+        <option value="1年">1年</option>
+        <option value="2年">2年</option>
+        <option value="3年">3年</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>クラス</label>
+      <select id="inp-class">
+        <option value="">選んでください</option>
+        <option value="1組">1組</option>
+        <option value="2組">2組</option>
+        <option value="3組">3組</option>
+        <option value="4組">4組</option>
+        <option value="5組">5組</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>名前</label>
+      <input type="text" id="inp-name" placeholder="例：山田 太郎">
+    </div>
+    <button class="btn btn-primary" id="info-next-btn" onclick="goToSelect()" disabled>次へ ▶</button>
+  </div>
+
+  <!-- 画面②：単元選択 -->
+  <div id="screen-select" class="hidden">
+    <h1>📚 英単語テスト</h1>
+    <div class="student-badge" id="student-badge"></div>
+
+    <p style="font-size:0.85rem; color:#666; margin-bottom:10px; font-weight:600;">▼ 練習する単元を選んでください（複数選択可）</p>
+    <div class="unit-grid" id="unit-grid"></div>
+    <div class="sub-select-row">
+      <button onclick="selectAll()">すべて選択</button>
+      <button onclick="clearAll()">選択解除</button>
+    </div>
+    <div style="background:#f8f9ff; border-radius:12px; padding:12px; margin-bottom:14px; font-size:0.85rem; color:#555;">
+      <b>出題形式：</b>日本語 → 英語を記述<br>
+      <span id="selected-count" style="color:#667eea; font-weight:700;">0語</span>から
+      <span id="quiz-count-display">10問</span>出題
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+      <span style="font-size:0.85rem; color:#666;">問題数：</span>
+      <select id="num-questions" onchange="updateCount()" style="padding:6px 10px; border-radius:8px; border:1px solid #ddd; font-size:0.85rem;">
+        <option value="5">5問</option>
+        <option value="10" selected>10問</option>
+        <option value="20">20問</option>
+        <option value="30">30問</option>
+        <option value="all">全問</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" id="start-btn" onclick="startQuiz()" disabled>テストをスタート ▶</button>
+    <button class="btn btn-secondary" onclick="showScreen('info')" style="margin-top:6px; font-size:0.85rem; padding:10px;">← 名前を変更</button>
+  </div>
+
+  <!-- 画面③：クイズ -->
+  <div id="screen-quiz" class="hidden">
+    <div class="quiz-header">
+      <span style="font-size:0.85rem; color:#888;" id="q-counter">1 / 10</span>
+      <span style="font-size:0.85rem; color:#667eea; font-weight:700;" id="score-display">✅ 0</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <p class="question-label">日本語の意味に合う英語を入力してください</p>
+    <div class="question-text" id="question-text"></div>
+    <span class="pos-badge" id="pos-badge"></span>
+
+    <div class="answer-area">
+      <input type="text" class="answer-input" id="answer-input"
+        placeholder="英語で入力してください"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+        onkeydown="if(event.key==='Enter') submitAnswer()">
+      <p class="answer-hint">Enterキーまたはボタンで回答</p>
+    </div>
+
+    <div class="feedback hidden" id="feedback">
+      <div id="feedback-text"></div>
+      <div class="correct-answer" id="correct-answer-text"></div>
+    </div>
+
+    <button class="btn btn-primary hidden" id="submit-btn" onclick="submitAnswer()">回答する ✏️</button>
+    <button class="btn btn-primary hidden" id="next-btn" onclick="nextQuestion()">次の問題 ▶</button>
+    <button class="btn btn-secondary" onclick="confirmQuit()" style="margin-top:8px; font-size:0.85rem; padding:10px;">やめる</button>
+  </div>
+
+  <!-- 画面④：結果 -->
+  <div id="screen-result" class="hidden score-screen">
+    <h1 style="margin-bottom:16px;">テスト結果 📋</h1>
+    <div class="student-badge" id="result-student-badge"></div>
+
+    <div class="score-circle">
+      <span class="score-number" id="result-score">0</span>
+      <span class="score-label">/ <span id="result-total">10</span>問正解</span>
+    </div>
+    <p class="score-message" id="result-message"></p>
+    <p class="score-detail" id="result-detail"></p>
+
+    <!-- 答え一覧 -->
+    <div class="answer-list" id="answer-list"></div>
+
+    <!-- 送信ステータス -->
+    <div id="send-status"></div>
+
+    <button class="btn btn-primary" onclick="retryQuiz()">もう一度同じ単元で</button>
+    <button class="btn btn-secondary" onclick="showScreen('select')">単元を選び直す</button>
+  </div>
+
+</div>
+
+<script>
+const WORDS = {"U0":[{"e":"Nice to meet you.","j":"はじめまして。","p":"連"},{"e":"Good morning.","j":"おはようございます。","p":"連"},{"e":"nice","j":"すてきな、よい","p":"形"},{"e":"to","j":"【不定詞（名詞的）】…する［である］こと","p":"前"},{"e":"meet","j":"…と知り合いになる","p":"動"},{"e":"you","j":"あなた（たち）を［に］","p":"代"},{"e":"good","j":"よい","p":"形"},{"e":"morning","j":"朝、午前","p":"名"},{"e":"I","j":"私は［が］","p":"代"},{"e":"am","j":"…です、…だ","p":"動"},{"e":"hi","j":"やあ、こんにちは","p":"間"},{"e":"my","j":"私の","p":"代"},{"e":"name","j":"名前","p":"名"},{"e":"is","j":"…です、…だ","p":"動"},{"e":"I’m","j":"I am","p":"短"},{"e":"hello","j":"やあ、こんにちは","p":"間"},{"e":"do","j":"［疑問文や応答を作る］","p":"助"},{"e":"like","j":"…を好む、…が好きである","p":"動"},{"e":"tennis","j":"テニス","p":"名"},{"e":"yes","j":"はい、ええ、そうです","p":"副"},{"e":"you","j":"あなた（たち）は［が］","p":"代"}],"U1-1":[{"e":"Call me ....","j":"私を…と呼んでください。","p":"連"},{"e":"call","j":"…を（～と）呼ぶ、名づける","p":"動"},{"e":"South Africa","j":"南アフリカ共和国","p":"名"},{"e":"everyone","j":"みなさん、みんな、だれでも","p":"代"},{"e":"me","j":"私を［に］","p":"代"},{"e":"from","j":"【起源・出所】…から、…出身の、…に由来する","p":"前"},{"e":"twelve","j":"12（の）","p":"名/形"},{"e":"want to","j":"…したい","p":"連"},{"e":"love","j":"…が大好きである、…を愛している","p":"動"},{"e":"Japanese","j":"日本の、日本人の、日本語の","p":"形"},{"e":"sweet","j":"甘い菓子、キャンディー","p":"名"},{"e":"and","j":"…と～","p":"接"},{"e":"too","j":"…もまた、そのうえ","p":"副"},{"e":"join","j":"…に加わる、参加する","p":"動"},{"e":"the","j":"［状況や文脈から何をさすかわかる場合］その","p":"冠"},{"e":"club","j":"クラブ、部","p":"名"},{"e":"number","j":"数、数字","p":"名"},{"e":"one","j":"1つ［1人］（の）","p":"名/形"},{"e":"two","j":"2（つの）","p":"名/形"},{"e":"three","j":"3（つの）","p":"名/形"},{"e":"four","j":"4（つの）","p":"名/形"},{"e":"five","j":"5（つの）","p":"名/形"},{"e":"six","j":"6（つの）","p":"名/形"},{"e":"seven","j":"7（つの）","p":"名/形"},{"e":"eight","j":"8（つの）","p":"名/形"},{"e":"nine","j":"9（つの）","p":"名/形"},{"e":"eleven","j":"11（の）","p":"名/形"},{"e":"thirteen","j":"13（の）","p":"名/形"},{"e":"fourteen","j":"14（の）","p":"名/形"},{"e":"fifteen","j":"15（の）","p":"名/形"},{"e":"sixteen","j":"16（の）","p":"名/形"},{"e":"seventeen","j":"17（の）","p":"名/形"},{"e":"eighteen","j":"18（の）","p":"名/形"},{"e":"nineteen","j":"19（の）","p":"名/形"},{"e":"twenty","j":"20（の）","p":"名/形"},{"e":"thirty","j":"30（の）","p":"名/形"},{"e":"forty","j":"40（の）","p":"名/形"},{"e":"fifty","j":"50（の）","p":"名/形"},{"e":"sixty","j":"60（の）","p":"名/形"},{"e":"seventy","j":"70（の）","p":"名/形"},{"e":"eighty","j":"80（の）","p":"名/形"},{"e":"ninety","j":"90（の）","p":"名/形"},{"e":"hundred","j":"100（の）","p":"名/形"},{"e":"zero","j":"0（の）","p":"名/形"}],"U1-2":[{"e":"fan","j":"ファン","p":"名"},{"e":"often","j":"しばしば、よく","p":"副"},{"e":"with","j":"【共同・同伴】…といっしょに","p":"前"},{"e":"rugby","j":"ラグビー","p":"名"},{"e":"watch","j":"…を（注意して）見る","p":"動"},{"e":"friend","j":"友達","p":"名"},{"e":"great","j":"すばらしい、とても楽しい","p":"形"},{"e":"but","j":"しかし、けれども","p":"接"},{"e":"no","j":"いいえ、いや、だめだ","p":"副"},{"e":"not","j":"…でない、…しない、…ではなく","p":"副"},{"e":"oh","j":"まあ、あら、ああ、おや","p":"間"},{"e":"don’t","j":"do not","p":"短"},{"e":"do","j":"［否定文や否定の命令文を作る］","p":"助"}],"U1-3":[{"e":"draw","j":"（線画）をかく","p":"動"},{"e":"an","j":"1つの、1人の［母音で始まる数えられる名詞の前に置く。ふつう訳さない］","p":"冠"},{"e":"anime","j":"（日本の）アニメ","p":"名"},{"e":"comic","j":"マンガ","p":"名"},{"e":"wow","j":"うわあ、わあ","p":"間"},{"e":"are","j":"…です、…だ","p":"動"},{"e":"How about you?","j":"あなたはどうですか。","p":"連"},{"e":"so","j":"だから、それで、では","p":"接"},{"e":"about","j":"…について、…に関する","p":"前"},{"e":"lesson","j":"授業、レッスン","p":"名"},{"e":"in","j":"【従事・所属】…に所属して、参加して","p":"前"},{"e":"art","j":"芸術、美術","p":"名"},{"e":"how","j":"【状態】どんなようす［ぐあい］で","p":"副"},{"e":"school","j":"学校","p":"名"},{"e":"now","j":"今、現在は、今では、今すぐ","p":"副"},{"e":"take","j":"…を利用する、…を受ける","p":"動"},{"e":"swimming","j":"水泳","p":"名"}],"U2-1":[{"e":"class","j":"学級、組、クラス","p":"名"},{"e":"our","j":"私たちの","p":"代"},{"e":"Canada","j":"カナダ","p":"名"},{"e":"America","j":"アメリカ（合衆国）［正式名称はthe United States of America］","p":"名"},{"e":"Ms.","j":"［女性をさして］…さん、先生","p":"名"},{"e":"he","j":"彼は［が］","p":"代"},{"e":"she","j":"彼女は［が］","p":"代"},{"e":"new","j":"新しい、新任の","p":"形"},{"e":"teacher","j":"先生、教師","p":"名"},{"e":"he’s","j":"he is","p":"短"},{"e":"she’s","j":"she is","p":"短"},{"e":"English","j":"英語の、英語で書かれた","p":"形"},{"e":"be good at (...ing)","j":"（…することが）じょうずだ、得意だ","p":"連"},{"e":"Mr.","j":"［男性をさして］…さん、先生","p":"名"},{"e":"on","j":"【所属】…の一員で、…に属して","p":"前"},{"e":"team","j":"チーム、組","p":"名"},{"e":"at","j":"【評価の対象】…は、…が、…に関しては","p":"前"},{"e":"cool","j":"かっこいい","p":"形"},{"e":"good","j":"じょうずな、うまい","p":"形"}],"U2-2":[{"e":"Chinese","j":"中国の","p":"形"},{"e":"food","j":"食べ物","p":"名"},{"e":"father","j":"父、お父さん","p":"名"},{"e":"can","j":"【能力・可能】…することができる","p":"助"},{"e":"make","j":"…を作る、得る","p":"動"},{"e":"very","j":"非常に、とても、［否定文で］あまり（…でない）","p":"副"},{"e":"well","j":"じょうずに、うまく、よく","p":"副"},{"e":"that","j":"［すでに述べた事柄をさして］そのこと、それ","p":"代"},{"e":"that’s","j":"that is","p":"短"},{"e":"I see.","j":"なるほど。わかった。","p":"連"},{"e":"cannot","j":"…できない","p":"助"},{"e":"some","j":"いくつかの、いくらかの、少しの","p":"形"},{"e":"parent","j":"親、［parentsで］親たち、両親","p":"名"},{"e":"China","j":"中国","p":"名"},{"e":"read","j":"（…を）読む、読んで知る","p":"動"},{"e":"really","j":"本当ですか、へえ、そうなんだ","p":"副"},{"e":"see","j":"（…が）わかる、理解する","p":"動"},{"e":"can’t","j":"cannot","p":"短"}],"U2-3":[{"e":"Excuse me.","j":"すみません。失礼ですが。","p":"連"},{"e":"Here you are.","j":"はい、どうぞ。","p":"連"},{"e":"Thank you.","j":"ありがとう。","p":"連"},{"e":"You’re welcome.","j":"どういたしまして。","p":"連"},{"e":"excuse","j":"…を許す","p":"動"},{"e":"oops","j":"おっと、うわっ、しまった","p":"間"},{"e":"here","j":"さあ、ほら","p":"副"},{"e":"welcome","j":"歓迎される","p":"形"},{"e":"your","j":"あなた（たち）の","p":"代"},{"e":"thank","j":"…に感謝する","p":"動"},{"e":"it","j":"それは［が］","p":"代"},{"e":"you’re","j":"you are","p":"短"},{"e":"it’s","j":"it is","p":"短"},{"e":"that","j":"あれ、それ、あの［その］人［もの、こと］","p":"代"},{"e":"are","j":"（…に）いる、ある","p":"動"},{"e":"bird","j":"鳥","p":"名"}],"U3-1":[{"e":"symbol","j":"シンボル、象徴、記号","p":"名"},{"e":"for","j":"【代理・代表】…のかわりに、…に相当する","p":"前"},{"e":"interesting","j":"おもしろい、興味深い","p":"形"},{"e":"favorite","j":"いちばん好きな、お気に入りの","p":"形"},{"e":"what","j":"何、どんなもの［こと］","p":"代"},{"e":"family","j":"一族","p":"名"},{"e":"what’s","j":"what is","p":"短"},{"e":"the","j":"［一度述べた名詞をくり返す場合］その、この、あの、例の","p":"冠"},{"e":"character","j":"登場人物","p":"名"},{"e":"also","j":"…もまた、そのうえ","p":"副"},{"e":"who","j":"だれ、だれが","p":"代"},{"e":"why","j":"なぜ、どうして","p":"副"},{"e":"brave","j":"勇かんな、勇ましい","p":"形"},{"e":"kind","j":"親切な、やさしい","p":"形"},{"e":"who’s","j":"who is","p":"短"}],"U3-2":[{"e":"around","j":"…の近くに","p":"前"},{"e":"live","j":"住む、住んでいる、生きる、暮らす、ずっと残る","p":"動"},{"e":"come","j":"来る、（相手のところへ・相手と同方向へ）行く、巡ってくる","p":"動"},{"e":"by","j":"【手段・方法・原因】…によって","p":"前"},{"e":"walk","j":"（…を）歩く、歩いていく［くる］","p":"動"},{"e":"here","j":"ここ","p":"名"},{"e":"how","j":"【方法・手段】どのようにして、どんなふうに","p":"副"},{"e":"to","j":"【方向・到達】…へ［に］、…のほうへ［に］","p":"前"},{"e":"after school","j":"放課後（に）","p":"連"},{"e":"after","j":"…のあとに［で］","p":"前"},{"e":"online","j":"オンラインで","p":"副"},{"e":"when","j":"いつ、どんなときに","p":"副"},{"e":"study","j":"（…を）勉強する、研究する","p":"動"},{"e":"week","j":"週、1週間","p":"名"},{"e":"Sunday","j":"日曜日","p":"名"},{"e":"Monday","j":"月曜日","p":"名"},{"e":"Tuesday","j":"火曜日","p":"名"},{"e":"Wednesday","j":"水曜日","p":"名"},{"e":"Thursday","j":"木曜日","p":"名"},{"e":"Friday","j":"金曜日","p":"名"},{"e":"Saturday","j":"土曜日","p":"名"},{"e":"on","j":"【日時】…に","p":"前"},{"e":"do","j":"（…を）する、行う","p":"動"},{"e":"Japanese","j":"日本語、日本人","p":"名"}],"U3-3":[{"e":"Good luck.","j":"幸運を祈ります。がんばって。","p":"連"},{"e":"hallway","j":"ろうか","p":"名"},{"e":"win","j":"（…に）勝つ","p":"動"},{"e":"next","j":"次の、今度の、となりの","p":"形"},{"e":"luck","j":"運、幸運","p":"名"},{"e":"where","j":"どこに［で、へ］","p":"副"},{"e":"practice","j":"（ …を）練習する","p":"動"},{"e":"hard","j":"熱心に、一生懸命に","p":"副"},{"e":"under","j":"…の下に［で］、…のもとに","p":"前"},{"e":"in","j":"【場所・位置】…（の中）に［で、の］","p":"前"},{"e":"game","j":"試合、競技","p":"名"},{"e":"by","j":"【場所】…のそばに","p":"前"},{"e":"on","j":"【場所】…（の上）に［で］、（本など）に載って","p":"前"},{"e":"near","j":"…の近くに［で］","p":"前"},{"e":"go","j":"行く","p":"動"},{"e":"park","j":"公園、遊園地","p":"名"},{"e":"station","j":"駅","p":"名"},{"e":"when’s","j":"when is","p":"短"},{"e":"where’s","j":"where is","p":"短"},{"e":"month","j":"（暦の上での）月、1か月","p":"名"},{"e":"date","j":"日、日付","p":"名"},{"e":"January","j":"1月","p":"名"},{"e":"February","j":"2月","p":"名"},{"e":"March","j":"3月","p":"名"},{"e":"April","j":"4月","p":"名"},{"e":"June","j":"6月","p":"名"},{"e":"July","j":"7月","p":"名"},{"e":"August","j":"8月","p":"名"},{"e":"September","j":"9月","p":"名"},{"e":"October","j":"10月","p":"名"},{"e":"November","j":"11月","p":"名"},{"e":"December","j":"12月","p":"名"},{"e":"first","j":"1日、1番め（の）、最初（の）","p":"名/形"},{"e":"second","j":"2日、2番め（の）","p":"名/形"},{"e":"third","j":"3日、3番め（の）","p":"名/形"},{"e":"fourth","j":"4日、4番め（の）","p":"名/形"},{"e":"fifth","j":"5日、5番め（の）","p":"名/形"},{"e":"sixth","j":"6日、6番め（の）","p":"名/形"},{"e":"seventh","j":"7日、7番め（の）","p":"名/形"},{"e":"eighth","j":"8日、8番め（の）","p":"名/形"},{"e":"ninth","j":"9日、9番め（の）","p":"名/形"},{"e":"tenth","j":"10日、10番め（の）","p":"名/形"},{"e":"eleventh","j":"11日、11番め（の）","p":"名/形"},{"e":"twelfth","j":"12日、12番め（の）","p":"名/形"},{"e":"thirteenth","j":"13日、13番め（の）","p":"名/形"},{"e":"fourteenth","j":"14日、14番め（の）","p":"名/形"},{"e":"fifteenth","j":"15日、15番め（の）","p":"名/形"},{"e":"sixteenth","j":"16日、16番め（の）","p":"名/形"},{"e":"seventeenth","j":"17日、17番め（の）","p":"名/形"},{"e":"eighteenth","j":"18日、18番め（の）","p":"名/形"},{"e":"nineteenth","j":"19日、19番め（の）","p":"名/形"},{"e":"twentieth","j":"20日、20番め（の）","p":"名/形"},{"e":"thirtieth","j":"30日、30番め（の）","p":"名/形"},{"e":"and","j":"［comeやgoのあとに用いて］…しに（来る、行く）","p":"接"},{"e":"see","j":"…が見える、…を見る、見物する","p":"動"},{"e":"at","j":"【場所】…に、…で","p":"前"},{"e":"is","j":"（…に）いる、ある","p":"動"}],"U4-1":[{"e":"one of","j":"…の1つ［1人］","p":"連"},{"e":"New Zealand","j":"ニュージーランド","p":"名"},{"e":"puppy","j":"子イヌ","p":"名"},{"e":"of","j":"【部分】…の中の［で］、…の","p":"前"},{"e":"someday","j":"いつか","p":"副"},{"e":"animal","j":"動物","p":"名"},{"e":"visit","j":"（人・場所）を訪ねる","p":"動"},{"e":"Japan","j":"日本","p":"名"},{"e":"really","j":"本当に、実際に","p":"副"},{"e":"family","j":"家族","p":"名"},{"e":"a lot of","j":"たくさんの、多数の","p":"連"},{"e":"How many ...?","j":"どれくらい多くの、いくつの","p":"連"},{"e":"lot","j":"［a lotまたはlotsで］たくさん","p":"名"},{"e":"they","j":"彼らは［が］、彼女らは［が］、それらは［が］","p":"代"},{"e":"many","j":"［ 数えられる名詞の複数形につけて］たくさんの、多くの","p":"形"},{"e":"they’re","j":"they are","p":"短"},{"e":"of","j":"【分量・種類】…の量の、…種類の","p":"前"},{"e":"how","j":"【程度】どれくらい","p":"副"},{"e":"so","j":"とても、非常に","p":"副"}],"U4-2":[{"e":"noon","j":"正午、真昼","p":"名"},{"e":"last","j":"最後の、最終の","p":"形"},{"e":"o’clock","j":"…時","p":"副"},{"e":"time","j":"時刻","p":"名"},{"e":"afternoon","j":"午後","p":"名"},{"e":"sport","j":"スポーツ","p":"名"},{"e":"a.m.","j":"午前","p":"副"},{"e":"p.m.","j":"午後","p":"副"},{"e":"what","j":"何の、どんな","p":"形"},{"e":"the","j":"［天体・時・方角など、1つしかないものをさす場合］the afternoon 午後","p":"冠"},{"e":"this","j":"今、今回","p":"代"},{"e":"class","j":"授業","p":"名"},{"e":"Sounds ....","j":"…そうですね。","p":"連"},{"e":"like","j":"…のような［に］、…に似た、…らしい","p":"前"},{"e":"basketball","j":"バスケットボール","p":"名"},{"e":"sound","j":"…に聞こえる、思える","p":"動"}],"U4-3":[{"e":"enjoy oneself","j":"楽しむ、楽しく過ごす","p":"連"},{"e":"front","j":"前、正面","p":"名"},{"e":"be","j":"…である、…になる","p":"動"},{"e":"nervous","j":"緊張して","p":"形"},{"e":"worry","j":"心配する、悩む","p":"動"},{"e":"yourself","j":"あなた自身を［に］","p":"代"},{"e":"turn","j":"順番、番","p":"名"},{"e":"please","j":"どうぞ、お願いします、すみませんが","p":"副"},{"e":"it","j":"［その場の状況から判断できる事物・事情を漠然とさす。ふつう訳さない］","p":"代"},{"e":"it","j":"それを［に］","p":"代"},{"e":"me","j":"［相手の言ったことを受けてIのかわりに］私","p":"代"},{"e":"look at","j":"…を見る","p":"連"},{"e":"sheep","j":"ヒツジ","p":"名"},{"e":"kiwi","j":"キーウィ［動物名］","p":"名"},{"e":"right","j":"正しい、正確な","p":"形"},{"e":"look","j":"見る、目を向ける","p":"動"},{"e":"at","j":"【方向】…をめがけて、…に向かって","p":"前"},{"e":"kiwi","j":"キウイフルーツ（＝kiwi fruit）","p":"名"},{"e":"we","j":"人は、われわれはみな［自分を含めた人々をさす。日本語に訳さない場合が多い］","p":"代"}],"U5-RT":[{"e":"fried egg","j":"目玉焼き","p":"連"},{"e":"on top of","j":"…の上に","p":"連"},{"e":"cafe","j":"喫茶店、カフェ","p":"名"},{"e":"website","j":"ウェブサイト","p":"名"},{"e":"popular","j":"人気のある","p":"形"},{"e":"owner","j":"所有者、持ち主","p":"名"},{"e":"know","j":"（…を）知っている、わかる","p":"動"},{"e":"patty","j":"パティ（ひき肉などを丸く平たい形にして焼いたもの）","p":"名"},{"e":"fried","j":"油であげた、油でいためた","p":"形"},{"e":"top","j":"表面、上部","p":"名"},{"e":"wonderful","j":"すばらしい、すてきな","p":"形"},{"e":"restaurant","j":"レストラン","p":"名"},{"e":"friendly","j":"好意的な、親切な","p":"形"},{"e":"dish","j":"料理、（料理の）1品","p":"名"}],"U5-1":[{"e":"... year(s) old","j":"…歳、創立…年","p":"連"},{"e":"as","j":"…として","p":"前"},{"e":"tour","j":"旅行、ツアー、見学","p":"名"},{"e":"guide","j":"ガイド、案内人","p":"名"},{"e":"brother","j":"兄、弟、兄弟","p":"名"},{"e":"year","j":"…歳、年齢","p":"名"},{"e":"old","j":"…歳の、（作られてから）…年［月］になる","p":"形"},{"e":"work","j":"働く、作業をする","p":"動"},{"e":"enjoy ...ing","j":"…して楽しむ","p":"連"},{"e":"write","j":"（…を）書く","p":"動"},{"e":"blog","j":"ブログ","p":"名"},{"e":"local","j":"（ある）地方の、地元の","p":"形"},{"e":"beautiful","j":"美しい","p":"形"},{"e":"spot","j":"地点、場所","p":"名"},{"e":"his","j":"彼の","p":"代"},{"e":"nature","j":"自然","p":"名"}],"U5-2":[{"e":"any","j":"［疑問文などで］いくらかの、何らかの","p":"形"},{"e":"does","j":"［疑問文や応答を作る］","p":"助"},{"e":"has","j":"haveの三人称単数現在形","p":"助/動"},{"e":"question","j":"質問、疑問","p":"名"},{"e":"weekend","j":"週末","p":"名"},{"e":"doesn’t","j":"does not","p":"短"},{"e":"does","j":"［否定文を作る］","p":"助"},{"e":"there","j":"そこに［で、へ］","p":"副"},{"e":"surf","j":"サーフィン［波乗り］をする","p":"動"},{"e":"life","j":"生活、暮らし","p":"名"},{"e":"swim","j":"泳ぐ","p":"動"},{"e":"sometimes","j":"ときどき","p":"副"},{"e":"dolphin","j":"イルカ","p":"名"}],"U6-RT":[{"e":"cushion","j":"クッション、ざぶとん","p":"名"},{"e":"different","j":"いろいろな","p":"形"},{"e":"role","j":"役、役割","p":"名"},{"e":"use","j":"…を使う、利用する、消費する","p":"動"},{"e":"only","j":"ただ…だけ","p":"副"},{"e":"prop","j":"小道具","p":"名"},{"e":"which","j":"どちら、どれ、どちらの人［もの］","p":"代"},{"e":"or","j":"…かまたは～、…や～","p":"接"},{"e":"casual","j":"カジュアルな、くだけた、ふだん着の","p":"形"},{"e":"large","j":"多い、多数の","p":"形"},{"e":"collection","j":"収集したもの、コレクション","p":"名"},{"e":"hand","j":"手","p":"名"},{"e":"towel","j":"タオル、手拭い","p":"名"},{"e":"wear","j":"…を着ている、身につけている","p":"動"},{"e":"clothes","j":"［複数あつかい］衣服","p":"名"},{"e":"for","j":"【対象】…に対して","p":"前"},{"e":"in","j":"【範囲】…において、…に関しては","p":"前"},{"e":"play","j":"（役）を演じる","p":"動"}],"U6-1":[{"e":"him","j":"彼を［に］","p":"代"},{"e":"say","j":"（…を）言う、…だと言う","p":"動"},{"e":"everything","j":"何でも、全てのもの［こと］","p":"代"},{"e":"show","j":"ショー","p":"名"},{"e":"let's","j":"…しよう","p":"短"},{"e":"how’s","j":"how is","p":"短"},{"e":"to","j":"【対象・関連】…に（とって）","p":"前"},{"e":"fine","j":"けっこうな","p":"形"},{"e":"for","j":"【用途・適合】…するための、…に適した、…向けの","p":"前"},{"e":"Why don’t we ...?","j":"…しませんか。","p":"連"},{"e":"her","j":"彼女を［に］","p":"代"},{"e":"performer","j":"演技者","p":"名"},{"e":"U.K.","j":"the U.K. 英国","p":"名"},{"e":"together","j":"いっしょに、ともに","p":"副"},{"e":"the","j":"［固有名詞につけて］the U.K. 英国","p":"冠"},{"e":"see","j":"…に会う","p":"動"}],"U6-2":[{"e":"Thanks.","j":"ありがとう。","p":"連"},{"e":"be careful with","j":"…のあつかいに気をつける","p":"連"},{"e":"minute","j":"（時間の単位の）分","p":"名"},{"e":"wait","j":"待つ","p":"動"},{"e":"whose","j":"だれの、だれのもの","p":"代"},{"e":"yours","j":"あなた（たち）のもの","p":"代"},{"e":"mine","j":"私のもの","p":"代"},{"e":"maybe","j":"たぶん、もしかすると","p":"副"},{"e":"careful","j":"注意深い","p":"形"},{"e":"start","j":"始まる、出発する、開始する","p":"動"},{"e":"ticket","j":"切符、チケット","p":"名"},{"e":"(Riko)'s","j":"［名詞の所有格を作る］（理子）の","p":"ー"},{"e":"in","j":"【時間】…に、…の間に、…後に","p":"前"},{"e":"thank","j":"感謝","p":"名"},{"e":"with","j":"【関係・対象】…に関して、…について","p":"前"},{"e":"How old ...?","j":"何歳で、作られてからどれくらいで","p":"連"},{"e":"crowded","j":"こみ合った、満員の","p":"形"},{"e":"history","j":"歴史","p":"名"},{"e":"still","j":"まだ、今でも","p":"副"},{"e":"over","j":"…より多く、…をこえて","p":"前"},{"e":"here","j":"ここに［で、へ］","p":"副"},{"e":"well","j":"①［ためらったり、返事に詰まったりして］ええと、そうですね","p":"間"}],"U7-扉":[{"e":"of","j":"【行為の対象】…を、…の、…への","p":"前"}],"U7-RT":[{"e":"I’m sorry.","j":"ごめんなさい。すみません。","p":"連"},{"e":"mom","j":"お母さん","p":"名"},{"e":"travel","j":"旅行する","p":"動"},{"e":"angry","j":"怒った、腹を立てた","p":"形"},{"e":"palace","j":"宮殿、王宮","p":"名"},{"e":"exciting","j":"興奮させるような、わくわくさせるような","p":"形"},{"e":"late","j":"遅い、おくれた、遅刻した","p":"形"},{"e":"sorry","j":"すまなく思って","p":"形"},{"e":"funny","j":"おかしな","p":"形"},{"e":"OK","j":"よろしい、はい、わかった、それでは","p":"間"},{"e":"we’re","j":"we are","p":"短"},{"e":"big","j":"大きい","p":"形"},{"e":"excuse","j":"言い訳、弁解、口実","p":"名"},{"e":"for","j":"【利益】…のために［の］","p":"前"},{"e":"how","j":"【感嘆】なんと、なんて、どんなに","p":"副"},{"e":"is","j":"［現在進行形やbe going toを作る］","p":"助"},{"e":"too","j":"あまりに、…すぎる","p":"副"},{"e":"well","j":"②［話を切り出したり、再び始めたりして］さて、ところで、それでは","p":"間"},{"e":"what","j":"なんと、なんて","p":"形"},{"e":"dad","j":"お父さん","p":"名"}],"U7-1":[{"e":"What’s up?","j":"どうしたのですか。","p":"連"},{"e":"What’s up?","j":"どうしたのですか。","p":"連"},{"e":"tomorrow","j":"明日（は）","p":"名/副"},{"e":"plan","j":"計画、予定","p":"名"},{"e":"free","j":"ひまな","p":"形"},{"e":"busy","j":"忙しい","p":"形"},{"e":"talk","j":"話す、しゃべる","p":"動"},{"e":"up","j":"[What's up?で] どうしたのですか。","p":"副"},{"e":"am","j":"［現在進行形を作る］","p":"助"},{"e":"hello","j":"（電話で）もしもし","p":"間"},{"e":"sound like","j":"…のように聞こえる、思える","p":"連"},{"e":"look forward to","j":"…を楽しみに待つ","p":"連"},{"e":"mean","j":"…を意味する、…のことを言う","p":"動"},{"e":"forward","j":"［look forward toで］…を楽しみに待つ","p":"副"},{"e":"at","j":"【時刻・年齢】…に","p":"前"},{"e":"online","j":"オンラインの","p":"形"}],"U7-2":[{"e":"Welcome to ....","j":"…へようこそ。","p":"連"},{"e":"market","j":"市場","p":"名"},{"e":"souvenir","j":"記念品、みやげ","p":"名"},{"e":"place","j":"場所、ところ","p":"名"},{"e":"appear","j":"現れる、姿を現す","p":"動"},{"e":"those","j":"あれらの、それらの","p":"形"},{"e":"buy","j":"…を買う","p":"動"},{"e":"people","j":"人々","p":"名"},{"e":"also","j":"そのうえ、さらに","p":"接"},{"e":"are","j":"［現在進行形やbe going toを作る］","p":"助"},{"e":"take","j":"（写真など）を撮る","p":"動"},{"e":"welcome","j":"ようこそ、いらっしゃい","p":"間"},{"e":"around","j":"…のまわりを回って","p":"前"},{"e":"home","j":"故郷","p":"名"}],"U8-RT":[{"e":"on the other hand","j":"他方では、これに反して","p":"連"},{"e":"for a long time","j":"長い間","p":"連"},{"e":"well","j":"井戸","p":"名"},{"e":"other","j":"（2つの中で）もう1つ［一方］の","p":"形"},{"e":"village","j":"村","p":"名"},{"e":"collect","j":"…を集める","p":"動"},{"e":"far","j":"遠くに［へ］","p":"副"},{"e":"group","j":"グループ、団体","p":"名"},{"e":"build","j":"…を建てる、つくる","p":"動"},{"e":"these","j":"これら、この人たち","p":"代"},{"e":"money","j":"金、通貨","p":"名"},{"e":"get","j":"…を得る、受け取る、手に入れる","p":"動"},{"e":"clean","j":"きれいな、清潔な","p":"形"},{"e":"happy","j":"幸せな、うれしい、楽しい","p":"形"},{"e":"river","j":"川","p":"名"},{"e":"for","j":"【時間・距離】…の間","p":"前"},{"e":"from","j":"【場所】…から","p":"前"},{"e":"help","j":"援助、助け","p":"名"},{"e":"look","j":"…（のよう）に見える","p":"動"},{"e":"time","j":"時間、期間、ひま","p":"名"}],"U8-1":[{"e":"in need","j":"困っている","p":"連"},{"e":"ethnic","j":"民族（特有）の","p":"形"},{"e":"Africa","j":"アフリカ","p":"名"},{"e":"Kenya","j":"ケニア","p":"名"},{"e":"volunteer","j":"ボランティア","p":"名"},{"e":"need","j":"困っている状態、貧困","p":"名"},{"e":"cousin","j":"いとこ","p":"名"},{"e":"in","j":"【状態】…（の状態）で","p":"前"},{"e":"do one’s best","j":"最善を尽くす","p":"連"},{"e":"try to","j":"…しようと試みる、努力する","p":"連"},{"e":"teach","j":"…に（～を）教える","p":"動"},{"e":"try","j":"（…を）試す、やってみる、努力する","p":"動"},{"e":"best","j":"最もよいもの、最良の状態","p":"名"},{"e":"respect","j":"…を尊敬する、尊重する","p":"動"},{"e":"become","j":"…になる","p":"動"},{"e":"children","j":"childの複数形","p":"名"},{"e":"child","j":"子供","p":"名"},{"e":"country","j":"国","p":"名"},{"e":"always","j":"いつも、常に","p":"副"},{"e":"or","j":"［否定文で］…もまた（～ない）","p":"接"},{"e":"some","j":"一部の、（中には）…もある","p":"形"}],"U8-2":[{"e":"of course","j":"もちろん","p":"連"},{"e":"need to","j":"…する必要がある","p":"連"},{"e":"African","j":"アフリカ（人）の","p":"形"},{"e":"reduce","j":"（サイズ・数量・程度など）を減らす、縮小する","p":"動"},{"e":"waste","j":"ごみ、廃棄物","p":"名"},{"e":"meat","j":"肉","p":"名"},{"e":"pie","j":"パイ","p":"名"},{"e":"bean","j":"豆","p":"名"},{"e":"soup","j":"スープ","p":"名"},{"e":"chicken","j":"とり肉、チキン","p":"名"},{"e":"curry","j":"カレー（料理）","p":"名"},{"e":"all","j":"全ての、全部の","p":"形"},{"e":"need","j":"…を必要とする","p":"動"},{"e":"that","j":"あの、その、例の","p":"形"},{"e":"plastic","j":"プラスチック［ビニール］製の","p":"形"},{"e":"paper","j":"紙の","p":"形"},{"e":"straw","j":"ストロー","p":"名"},{"e":"original","j":"独創的な、独自の","p":"形"},{"e":"reusable","j":"再利用できる","p":"形"},{"e":"course","j":"［of courseで］もちろん","p":"名"},{"e":"one","j":"［前に出てきた名詞のかわりとして］1つ、1人、…なもの","p":"代"}],"U9-RT":[{"e":"have a ... time","j":"…な時を過ごす","p":"連"},{"e":"spent","j":"spendの過去形","p":"動"},{"e":"spend","j":"（時）を過ごす","p":"動"},{"e":"came","j":"comeの過去形","p":"動"},{"e":"bought","j":"buyの過去形","p":"動"},{"e":"fortune slip","j":"おみくじ","p":"名"},{"e":"read","j":"readの過去形","p":"動"},{"e":"said","j":"sayの過去形","p":"動"},{"e":"charm","j":"お守り","p":"名"},{"e":"got","j":"getの過去形","p":"動"},{"e":"wooden","j":"木でできた、木製の","p":"形"},{"e":"wish","j":"願い、願い事","p":"名"},{"e":"board game","j":"ボードゲーム","p":"名"},{"e":"New Year's Day","j":"元日","p":"名"},{"e":"future","j":"未来、将来","p":"名"},{"e":"bad","j":"悪い、よくない、ひどい","p":"形"},{"e":"tablet","j":"板状の小片","p":"名"},{"e":"had","j":"haveの過去形","p":"動"},{"e":"have","j":"（ある経験）をする、（ある時）を過ごす、（病気）にかかっている","p":"動"},{"e":"so","j":"そんなに、それほど","p":"副"},{"e":"time","j":"（ある経験をした）時間","p":"名"}],"U9-1":[{"e":"year","j":"年、1年","p":"名"},{"e":"go back","j":"帰る、戻る","p":"連"},{"e":"back","j":"戻って、返して","p":"副"},{"e":"during","j":"…の間ずっと、…の間に","p":"前"},{"e":"stay","j":"滞在する、泊まる","p":"動"},{"e":"snowboarding","j":"スノーボード（をすること）","p":"名"},{"e":"went","j":"goの過去形","p":"動"},{"e":"vacation","j":"休暇、休み","p":"名"},{"e":"mountain","j":"山","p":"名"},{"e":"for","j":"【原因・理由】…のために、…の理由で","p":"前"},{"e":"last","j":"この前の、昨…、先…","p":"形"},{"e":"at home","j":"家で［に］","p":"連"},{"e":"Christmas Day","j":"クリスマス","p":"名"},{"e":"relax","j":"くつろぐ","p":"動"},{"e":"met","j":"meetの過去形","p":"動"},{"e":"ice hockey","j":"アイスホッケー","p":"名"},{"e":"saw","j":"seeの過去形","p":"動"},{"e":"meet","j":"（…に）会う、…と出会う、面会する","p":"動"}],"U9-2":[{"e":"rice cake","j":"もち","p":"連"},{"e":"How nice!","j":"いいね。すばらしい。うれしい。","p":"連"},{"e":"did","j":"doの過去形","p":"助/動"},{"e":"traditional","j":"伝統的な","p":"形"},{"e":"special","j":"特別な","p":"形"},{"e":"ate","j":"eatの過去形","p":"動"},{"e":"New Year's Eve","j":"大みそか","p":"名"},{"e":"didn’t","j":"did not","p":"短"},{"e":"Good for you!","j":"よくやった。","p":"連"},{"e":"grandparent","j":"祖父、祖母","p":"名"},{"e":"wrote","j":"writeの過去形","p":"動"},{"e":"New Year","j":"新年","p":"名"},{"e":"card","j":"カード、はがき","p":"名"},{"e":"clean","j":"…をそうじする","p":"動"},{"e":"for","j":"…にとって","p":"前"}],"U10-扉":[{"e":"this","j":"今の、現在の","p":"形"}],"U10-RT":[{"e":"there is［are］","j":"…がある［いる］","p":"連"},{"e":"set up","j":"…を建てる","p":"連"},{"e":"trip","j":"旅行","p":"名"},{"e":"campground","j":"キャンプ場","p":"名"},{"e":"hot spring","j":"温泉","p":"名"},{"e":"set","j":"setの過去形","p":"動"},{"e":"set","j":"…を置く、すえる、配置する","p":"動"},{"e":"tent","j":"テント","p":"名"},{"e":"main","j":"主な、主要な","p":"形"},{"e":"campfire","j":"キャンプファイア","p":"名"},{"e":"camping","j":"キャンプ（生活）","p":"名"},{"e":"night","j":"夜、晩","p":"名"},{"e":"event","j":"出来事、行事","p":"名"},{"e":"around","j":"…のまわりに、周囲に","p":"前"},{"e":"lot","j":"［a lotまたはlotsで］たいへん、とても","p":"名"},{"e":"up","j":"上へ［に］、上のほうへ、立てて","p":"副"},{"e":"there’s","j":"there is","p":"短"},{"e":"isn’t","j":"is not","p":"短"},{"e":"aren’t","j":"are not","p":"短"}],"U10-1":[{"e":"at first","j":"最初は、はじめのうちは","p":"連"},{"e":"like ...ing","j":"…するのが好きである","p":"連"},{"e":"chorus contest","j":"合唱コンクール","p":"連"},{"e":"remember","j":"（…を）思い出す、覚えている","p":"動"},{"e":"bored","j":"退屈した、うんざりした","p":"形"},{"e":"were","j":"areの過去形","p":"動"},{"e":"realize","j":"…だと気づく","p":"動"},{"e":"chorus","j":"合唱","p":"名"},{"e":"contest","j":"コンテスト、コンクール","p":"名"},{"e":"was","j":"am、isの過去形","p":"動/助"},{"e":"place","j":"順位、立場","p":"名"},{"e":"practice","j":"練習","p":"名"},{"e":"win","j":"…を勝ち取る、獲得する","p":"動"},{"e":"made","j":"makeの過去形","p":"動"},{"e":"mistake","j":"誤り、まちがい","p":"名"},{"e":"anyone","j":"［肯定文で］だれでも","p":"代"},{"e":"won","j":"winの過去形","p":"動"},{"e":"anyway","j":"とにかく、それでも","p":"副"},{"e":"memory","j":"思い出","p":"名"},{"e":"wasn’t","j":"was not","p":"短"},{"e":"weren’t","j":"were not","p":"短"},{"e":"best","j":"［goodの最上級］最もよい","p":"形"},{"e":"can","j":"【可能性】…することがあり得る","p":"助"},{"e":"make","j":"…をする、行う","p":"動"}],"U10-2":[{"e":"hey","j":"やあ、おい、ちょっと","p":"間"},{"e":"break","j":"休憩","p":"名"},{"e":"then","j":"そのとき（に）","p":"副"},{"e":"album","j":"アルバム","p":"名"},{"e":"yesterday","j":"昨日（は）","p":"名/副"},{"e":"show","j":"（…に）～を［…だと］見せる、示す","p":"動"},{"e":"bring back","j":"…を思い出させる","p":"連"},{"e":"on one’s way (to)","j":"（…へ行く）途中で","p":"連"},{"e":"bring","j":"…をもたらす","p":"動"},{"e":"heart","j":"心臓、心","p":"名"},{"e":"beat","j":"どきどきする","p":"動"},{"e":"way","j":"道、道筋","p":"名"},{"e":"each","j":"それぞれの、各自の","p":"形"},{"e":"fast","j":"速く","p":"副"},{"e":"on","j":"【状態】…している最中で、…中で","p":"前"},{"e":"these","j":"これらの","p":"形"}]};
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyXR9Uflsx8fmAmADTzVHJxgm0dWfjoAXK2m00Bp2it896lGJ43D6F3CPUrES08KMJqtg/exec';
+
+const POS_MAP = {'名':'名詞','動':'動詞','形':'形容詞','副':'副詞','代':'代名詞','前':'前置詞','接':'接続詞','冠':'冠詞','連':'連語・フレーズ','間':'間投詞'};
+
+let student = { grade: '', cls: '', name: '' };
+let selectedUnits = [];
+let quizWords = [];
+let current = 0;
+let score = 0;
+let answered = false;
+let answerLog = [];
+
+// ---- 画面①：生徒情報 ----
+['inp-grade','inp-class','inp-name'].forEach(id => {
+  document.getElementById(id).addEventListener('input', checkInfoForm);
+});
+function checkInfoForm(){
+  const g = document.getElementById('inp-grade').value;
+  const c = document.getElementById('inp-class').value;
+  const n = document.getElementById('inp-name').value.trim();
+  document.getElementById('info-next-btn').disabled = !(g && c && n);
+}
+function goToSelect(){
+  student.grade = document.getElementById('inp-grade').value;
+  student.cls   = document.getElementById('inp-class').value;
+  student.name  = document.getElementById('inp-name').value.trim();
+  const badge = student.grade + ' ' + student.cls + '　' + student.name;
+  document.getElementById('student-badge').textContent = '👤 ' + badge;
+  document.getElementById('result-student-badge').textContent = '👤 ' + badge;
+  initUnitGrid();
+  showScreen('select');
+}
+
+// ---- 画面②：単元選択 ----
+function initUnitGrid(){
+  const grid = document.getElementById('unit-grid');
+  grid.innerHTML = '';
+  Object.keys(WORDS).forEach(unit => {
+    const btn = document.createElement('div');
+    btn.className = 'unit-btn';
+    btn.dataset.unit = unit;
+    btn.innerHTML = unit + '<span class="count">' + WORDS[unit].length + '語</span>';
+    btn.onclick = () => toggleUnit(unit, btn);
+    grid.appendChild(btn);
+  });
+  updateSelectedCount();
+}
+function toggleUnit(unit, btn){
+  const idx = selectedUnits.indexOf(unit);
+  if(idx === -1){ selectedUnits.push(unit); btn.classList.add('selected'); }
+  else { selectedUnits.splice(idx, 1); btn.classList.remove('selected'); }
+  updateSelectedCount();
+}
+function selectAll(){
+  selectedUnits = Object.keys(WORDS);
+  document.querySelectorAll('.unit-btn').forEach(b => b.classList.add('selected'));
+  updateSelectedCount();
+}
+function clearAll(){
+  selectedUnits = [];
+  document.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('selected'));
+  updateSelectedCount();
+}
+function updateSelectedCount(){
+  const total = selectedUnits.reduce((s,u) => s + (WORDS[u]?WORDS[u].length:0), 0);
+  document.getElementById('selected-count').textContent = total + '語';
+  document.getElementById('start-btn').disabled = total < 1;
+  updateCount();
+}
+function updateCount(){
+  const sel = document.getElementById('num-questions').value;
+  const total = selectedUnits.reduce((s,u) => s + (WORDS[u]?WORDS[u].length:0), 0);
+  const count = sel === 'all' ? total : Math.min(parseInt(sel), total);
+  document.getElementById('quiz-count-display').textContent = count + '問';
+}
+
+// ---- 画面③：クイズ ----
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function startQuiz(){
+  let pool = [];
+  selectedUnits.forEach(u => { if(WORDS[u]) pool = pool.concat(WORDS[u]); });
+  pool = shuffle(pool);
+  const sel = document.getElementById('num-questions').value;
+  const count = sel === 'all' ? pool.length : Math.min(parseInt(sel), pool.length);
+  quizWords = pool.slice(0, count);
+  current = 0; score = 0; answerLog = [];
+  showScreen('quiz');
+  showQuestion();
+}
+
+function showQuestion(){
+  const w = quizWords[current];
+  const total = quizWords.length;
+  document.getElementById('q-counter').textContent = (current+1) + ' / ' + total;
+  document.getElementById('score-display').textContent = '✅ ' + score;
+  document.getElementById('progress-fill').style.width = (current/total*100) + '%';
+  document.getElementById('question-text').textContent = w.j;
+  const pos = POS_MAP[w.p] || w.p;
+  document.getElementById('pos-badge').textContent = pos ? '【' + pos + '】' : '';
+
+  const inp = document.getElementById('answer-input');
+  inp.value = '';
+  inp.className = 'answer-input';
+  inp.disabled = false;
+  document.getElementById('feedback').className = 'feedback hidden';
+  document.getElementById('submit-btn').className = 'btn btn-primary';
+  document.getElementById('next-btn').className = 'btn btn-primary hidden';
+  answered = false;
+  setTimeout(() => inp.focus(), 100);
+}
+
+function normalizeAnswer(s){
+  return s.trim().toLowerCase().replace(/[！!？?。、.,]/g,'');
+}
+
+function submitAnswer(){
+  if(answered) return;
+  const w = quizWords[current];
+  const inp = document.getElementById('answer-input');
+  const userAns = inp.value;
+  if(!userAns.trim()){ inp.focus(); return; }
+
+  answered = true;
+  inp.disabled = true;
+  document.getElementById('submit-btn').className = 'btn btn-primary hidden';
+  document.getElementById('next-btn').className = 'btn btn-primary';
+
+  const correct = normalizeAnswer(userAns) === normalizeAnswer(w.e);
+  const fb = document.getElementById('feedback');
+  const fbText = document.getElementById('feedback-text');
+  const caText = document.getElementById('correct-answer-text');
+
+  if(correct){
+    inp.classList.add('correct');
+    fb.className = 'feedback correct';
+    fbText.textContent = '⭕ 正解！';
+    caText.textContent = '';
+    score++;
+  } else {
+    inp.classList.add('wrong');
+    fb.className = 'feedback wrong';
+    fbText.textContent = '❌ 不正解';
+    caText.textContent = '正解：' + w.e;
+  }
+  document.getElementById('score-display').textContent = '✅ ' + score;
+
+  answerLog.push({
+    japanese: w.j,
+    correct: w.e,
+    student: userAns,
+    isCorrect: correct
+  });
+}
+
+function nextQuestion(){
+  current++;
+  if(current >= quizWords.length){ showResult(); }
+  else { showQuestion(); }
+}
+
+function confirmQuit(){
+  if(confirm('テストをやめますか？結果は送信されません。')){ showScreen('select'); }
+}
+
+// ---- 画面④：結果 ----
+function showResult(){
+  const total = quizWords.length;
+  const pct = Math.round(score / total * 100);
+  document.getElementById('result-score').textContent = score;
+  document.getElementById('result-total').textContent = total;
+  document.getElementById('result-detail').textContent = '正答率 ' + pct + '% (' + score + '/' + total + '問)';
+
+  let msg = '';
+  if(pct===100) msg='完璧です！🏆';
+  else if(pct>=80) msg='すばらしい！✨';
+  else if(pct>=60) msg='よくできました！👍';
+  else if(pct>=40) msg='もう少し頑張ろう！💪';
+  else msg='復習してみよう！📖';
+  document.getElementById('result-message').textContent = msg;
+
+  // 答え一覧
+  const list = document.getElementById('answer-list');
+  list.innerHTML = '';
+  answerLog.forEach((a, i) => {
+    const div = document.createElement('div');
+    div.className = 'answer-item ' + (a.isCorrect ? 'ok' : 'ng');
+    div.innerHTML =
+      '<span class="answer-icon">' + (a.isCorrect ? '⭕' : '❌') + '</span>' +
+      '<div>' +
+        '<div class="question-word">' + (i+1) + '. ' + a.japanese + '</div>' +
+        (a.isCorrect
+          ? '<div class="correct-word">✔ ' + a.correct + '</div>'
+          : '<div class="your-answer">あなた：' + (a.student||'(未入力)') + '</div>' +
+            '<div class="correct-word">正解：' + a.correct + '</div>'
+        ) +
+      '</div>';
+    list.appendChild(div);
+  });
+
+  showScreen('result');
+  sendResult(pct, total);
+}
+
+// ---- Google Sheets送信 ----
+function sendResult(pct, total){
+  const statusEl = document.getElementById('send-status');
+  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'APPS_SCRIPT_URL_PLACEHOLDER'){
+    statusEl.className = 'send-err';
+    statusEl.textContent = '⚠️ 送信先が未設定です（先生に連絡してください）';
+    return;
+  }
+  statusEl.className = 'sending';
+  statusEl.textContent = '📤 結果を送信中...';
+
+  const units = selectedUnits.join('・');
+  const wrongWords = answerLog.filter(a => !a.isCorrect).map(a => a.japanese + '→' + a.correct).join(' / ');
+
+  const payload = {
+    timestamp: new Date().toLocaleString('ja-JP'),
+    grade: student.grade,
+    class: student.cls,
+    name: student.name,
+    units: units,
+    score: score,
+    total: total,
+    percentage: pct,
+    wrongWords: wrongWords || 'なし'
+  };
+
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    statusEl.className = 'send-ok';
+    statusEl.textContent = '✅ 先生に結果を送信しました！';
+  })
+  .catch(() => {
+    statusEl.className = 'send-err';
+    statusEl.textContent = '⚠️ 送信できませんでした（Wi-Fiを確認してください）';
+  });
+}
+
+function retryQuiz(){ startQuiz(); }
+
+function showScreen(name){
+  ['info','select','quiz','result'].forEach(s => {
+    document.getElementById('screen-'+s).classList.toggle('hidden', s !== name);
+  });
+}
+</script>
+</body>
+</html>
