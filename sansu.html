@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>けいさんモンスター ずかん</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --pink: #ff8fc0;
+    --pink-deep: #ff5fa2;
+    --lav: #b98cff;
+    --mint: #6fe0c8;
+    --cream: #fff7fb;
+    --yellow: #ffd45e;
+  }
+  body {
+    font-family: -apple-system, 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Rounded Mplus 1c', sans-serif;
+    background: linear-gradient(160deg, #ffd6ec 0%, #e6d4ff 55%, #d4f2ff 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    color: #6a4a63;
+    overflow-x: hidden;
+  }
+  .app {
+    background: var(--cream);
+    border-radius: 28px;
+    padding: 22px 20px 28px;
+    max-width: 460px;
+    width: 100%;
+    box-shadow: 0 18px 50px rgba(255,95,162,0.28);
+    position: relative;
+  }
+  h1 { text-align: center; font-size: 1.5rem; color: var(--pink-deep); letter-spacing: .5px; }
+  h1 small { display:block; font-size: .8rem; color: var(--lav); font-weight: 600; margin-top: 4px; }
+
+  /* ステータスバー */
+  .status {
+    display:flex; align-items:center; justify-content:space-between;
+    background: #fff; border: 3px solid #ffdcec; border-radius: 18px;
+    padding: 10px 14px; margin: 14px 0 18px;
+  }
+  .status .lv { font-weight: 800; color: var(--lav); font-size: .95rem; }
+  .status .lv b { font-size: 1.3rem; color: var(--pink-deep); }
+  .status .stars { font-weight: 800; color: var(--yellow); font-size: 1.05rem; }
+  .barwrap { flex: 1; margin: 0 12px; }
+  .barlabel { font-size:.65rem; color:#c79fb8; margin-bottom:3px; }
+  .bar { height: 14px; background: #ffe6f2; border-radius: 10px; overflow: hidden; }
+  .bar > i { display:block; height:100%; width:0%; background: linear-gradient(90deg, var(--pink), var(--lav)); border-radius:10px; transition: width .5s ease; }
+
+  /* あいぼう(相棒モンスター) */
+  .buddy { text-align:center; margin: 6px 0 4px; }
+  .buddy .face { font-size: 4.4rem; line-height:1; display:inline-block; animation: bob 2.4s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-8px) } }
+  .buddy .name { font-size:.85rem; color: var(--lav); font-weight:700; margin-top:2px; }
+  .buddy .speech {
+    display:inline-block; background:#fff; border:3px solid #ffdcec; border-radius:16px;
+    padding:7px 14px; font-size:.9rem; font-weight:700; color:#e0559a; margin-top:8px; min-height: 20px;
+  }
+
+  /* 見出し */
+  .lead { text-align:center; color:#a878c9; font-weight:700; font-size:.95rem; margin: 16px 0 10px; }
+
+  /* えらぶボタン(演算/レベル) */
+  .choices { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .choices.three { grid-template-columns: 1fr 1fr; }
+  .choice {
+    border: 4px solid #ffd0e6; background:#fff; border-radius: 22px;
+    padding: 18px 10px; text-align:center; cursor:pointer; transition: transform .12s, box-shadow .12s;
+    font-weight: 800; color:#7a5a86;
+  }
+  .choice:active { transform: scale(.95); }
+  .choice .emo { font-size: 2.4rem; display:block; }
+  .choice .t { font-size: 1.1rem; margin-top: 6px; }
+  .choice .d { font-size: .72rem; color:#bda1cf; font-weight:600; margin-top:2px; }
+  .choice.plus { border-color:#ffc7dd; }
+  .choice.minus { border-color:#c8d9ff; }
+  .choice.basic { border-color:#bff0e2; }
+  .choice.advanced { border-color:#ffe0a8; }
+
+  .btn {
+    display:block; width:100%; border:none; border-radius:18px; padding:16px;
+    font-size:1.15rem; font-weight:800; color:#fff; cursor:pointer; margin-top: 14px;
+    background: linear-gradient(90deg, var(--pink-deep), var(--lav));
+    box-shadow: 0 8px 18px rgba(255,95,162,.35); transition: transform .12s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn.ghost { background:#fff; color:var(--lav); border:3px solid #e7d6ff; box-shadow:none; }
+
+  /* もんだい画面 */
+  .qhead { display:flex; justify-content:space-between; align-items:center; font-size:.8rem; color:#c79fb8; font-weight:700; margin-bottom: 6px; }
+  .qmode { background:#fff0f7; border-radius:12px; padding:4px 10px; }
+  .question {
+    text-align:center; background:#fff; border:4px solid #ffdcec; border-radius:24px;
+    padding: 26px 16px; margin: 8px 0 16px;
+  }
+  .question .expr { font-size: 3.1rem; font-weight:800; color:#6a4a63; letter-spacing: 2px; }
+  .question .expr .op { color: var(--pink-deep); }
+  .question .expr .eq { color: var(--lav); }
+  .question .qmon { font-size: 2rem; margin-top: 6px; }
+
+  /* こたえボタン */
+  .answers { display:grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .ans {
+    border:4px solid #ffd0e6; background:#fff; border-radius:20px; padding: 18px 0;
+    font-size: 1.8rem; font-weight:800; color:#7a5a86; cursor:pointer; transition: transform .1s;
+  }
+  .ans:active { transform: scale(.94); }
+  .ans.correct { background:#c8f7e6; border-color:var(--mint); color:#1f9e83; animation: pop .3s; }
+  .ans.wrong { background:#ffdede; border-color:#ff9a9a; color:#d65858; animation: shake .35s; }
+  .ans:disabled { cursor: default; opacity: .95; }
+  @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+  .feedback { text-align:center; font-size:1.1rem; font-weight:800; min-height:28px; margin-top:14px; }
+  .feedback.ok { color: var(--mint); }
+  .feedback.ng { color:#ff8aa0; }
+
+  /* けっか画面 */
+  .result { text-align:center; }
+  .result .big { font-size: 3.6rem; }
+  .result .score { font-size: 1.4rem; font-weight:800; color:var(--pink-deep); margin: 8px 0; }
+  .result .sub { color:#b58fc9; font-weight:700; }
+
+  /* ずかん */
+  .dex-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 6px; }
+  .dex {
+    background:#fff; border:3px solid #ffe0ef; border-radius:16px; padding:8px 4px; text-align:center;
+  }
+  .dex .df { font-size:2rem; filter: grayscale(1) opacity(.28); }
+  .dex.got .df { filter:none; }
+  .dex .dn { font-size:.62rem; color:#c79fb8; font-weight:700; margin-top:2px; }
+  .dex.got .dn { color: var(--lav); }
+
+  /* プレゼント モーダル */
+  .modal {
+    position: fixed; inset:0; background: rgba(120,60,120,.45); backdrop-filter: blur(3px);
+    display:none; align-items:center; justify-content:center; padding:20px; z-index:50;
+  }
+  .modal.show { display:flex; animation: fade .3s; }
+  @keyframes fade { from{opacity:0} to{opacity:1} }
+  .gift {
+    background: var(--cream); border-radius:26px; padding: 28px 22px; text-align:center;
+    max-width: 340px; width:100%; border:5px solid var(--yellow);
+    box-shadow: 0 20px 50px rgba(0,0,0,.3); animation: rise .4s;
+  }
+  @keyframes rise { from{ transform: translateY(30px) scale(.9); opacity:0 } to{ transform:none; opacity:1 } }
+  .gift .box { font-size: 4.6rem; animation: bob 1.6s ease-in-out infinite; }
+  .gift h2 { color: var(--pink-deep); font-size:1.4rem; margin: 6px 0; }
+  .gift .newmon { font-size: 3.4rem; margin: 8px 0 2px; }
+  .gift .gtxt { color:#a878c9; font-weight:700; font-size:.95rem; margin-bottom: 6px; }
+  .gift .present { font-size: 1rem; color:#e0559a; font-weight:800; background:#fff0f7; border-radius:14px; padding:8px; margin: 10px 0; }
+
+  /* きらきら */
+  .spark { position: fixed; font-size: 1.6rem; pointer-events:none; z-index: 60; animation: floatUp 1.1s ease-out forwards; }
+  @keyframes floatUp { 0%{ transform: translateY(0) scale(.5); opacity:1 } 100%{ transform: translateY(-140px) scale(1.4); opacity:0 } }
+
+  .hidden { display:none !important; }
+  .foot { text-align:center; margin-top:16px; font-size:.72rem; color:#d3b6cb; }
+  .row { display:flex; gap:10px; }
+  .row .btn { margin-top:14px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>けいさんモンスター<small>✨ ずかんを あつめよう ✨</small></h1>
+
+  <!-- ステータス -->
+  <div class="status">
+    <div class="lv">Lv <b id="lvNum">1</b></div>
+    <div class="barwrap">
+      <div class="barlabel">つぎのプレゼントまで</div>
+      <div class="bar"><i id="expBar"></i></div>
+    </div>
+    <div class="stars">✨<span id="starNum">0</span></div>
+  </div>
+
+  <!-- =========== ホーム画面 =========== -->
+  <section id="home">
+    <div class="buddy">
+      <span class="face" id="buddyFace">🐰</span>
+      <div class="name" id="buddyName">みみっち</div>
+      <div class="speech" id="buddySpeech">きょうも いっしょに がんばろ！</div>
+    </div>
+
+    <div class="lead">どっちの けいさんを する？</div>
+    <div class="choices">
+      <div class="choice plus" data-op="add">
+        <span class="emo">➕</span>
+        <div class="t">たしざん</div>
+        <div class="d">ふえる けいさん</div>
+      </div>
+      <div class="choice minus" data-op="sub">
+        <span class="emo">➖</span>
+        <div class="t">ひきざん</div>
+        <div class="d">へる けいさん</div>
+      </div>
+    </div>
+
+    <div class="lead">レベルを えらんでね</div>
+    <div class="choices">
+      <div class="choice basic" data-level="basic">
+        <span class="emo">🌸</span>
+        <div class="t">きほん</div>
+        <div class="d">10までの けいさん</div>
+      </div>
+      <div class="choice advanced" data-level="advanced">
+        <span class="emo">👑</span>
+        <div class="t">はってん</div>
+        <div class="d">20までの けいさん</div>
+      </div>
+    </div>
+
+    <button class="btn" id="startBtn">スタート！ 🎀</button>
+    <button class="btn ghost" id="showDexBtn">🐾 なかま ずかんを みる</button>
+  </section>
+
+  <!-- =========== もんだい画面 =========== -->
+  <section id="quiz" class="hidden">
+    <div class="qhead">
+      <span id="qMode" class="qmode">たしざん・きほん</span>
+      <span id="qCount">もんだい 1 / 10</span>
+    </div>
+    <div class="question">
+      <div class="expr" id="expr"></div>
+      <div class="qmon" id="qMon"></div>
+    </div>
+    <div class="answers" id="answers"></div>
+    <div class="feedback" id="feedback"></div>
+  </section>
+
+  <!-- =========== けっか画面 =========== -->
+  <section id="result" class="hidden">
+    <div class="result">
+      <div class="big" id="resFace">🎉</div>
+      <div class="score" id="resScore"></div>
+      <div class="sub" id="resSub"></div>
+    </div>
+    <button class="btn" id="againBtn">もういっかい！ 🔁</button>
+    <button class="btn ghost" id="homeBtn">🏠 ホームへ もどる</button>
+  </section>
+
+  <!-- =========== ずかん画面 =========== -->
+  <section id="dex" class="hidden">
+    <div class="lead">🐾 あつめた なかま 🐾</div>
+    <div class="dex-grid" id="dexGrid"></div>
+    <button class="btn ghost" id="dexBackBtn">🏠 もどる</button>
+  </section>
+
+  <div class="foot">おうちのひとと いっしょに あそんでね 💕</div>
+</div>
+
+<!-- プレゼント モーダル -->
+<div class="modal" id="giftModal">
+  <div class="gift">
+    <div class="box">🎁</div>
+    <h2>レベルアップ！</h2>
+    <div class="gtxt">あたらしい なかまが なかまに なったよ！</div>
+    <div class="newmon" id="giftMon">🦄</div>
+    <div class="name" id="giftName"></div>
+    <div class="present" id="giftPresent"></div>
+    <button class="btn" id="giftOk">やったー！ 🎉</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ===== あつめられる なかまモンスター（オリジナル・かわいい系）=====
+  var MONSTERS = [
+    { emo:"🐰", name:"みみっち",   gift:"ピンクの リボン 🎀" },
+    { emo:"🐱", name:"にゃんぷぅ",  gift:"ハートの ステッキ 💗" },
+    { emo:"🦄", name:"ゆめこ",     gift:"にじいろ クラウン 👑" },
+    { emo:"🐤", name:"ぴよまる",    gift:"おはなの かんむり 🌼" },
+    { emo:"🦊", name:"こんこ",     gift:"きらきら イヤリング ✨" },
+    { emo:"🐨", name:"ここあ",     gift:"くまの ぬいぐるみ 🧸" },
+    { emo:"🐹", name:"ぷくぷく",    gift:"いちごの ケーキ 🍓" },
+    { emo:"🐧", name:"ぺんた",     gift:"ゆきの マフラー 🧣" },
+    { emo:"🐻", name:"もふこ",     gift:"ハートの ふうせん 💝" },
+    { emo:"🦋", name:"ちょうこ",    gift:"きらめく ドレス 👗" },
+    { emo:"🐬", name:"みずき",     gift:"うみの しんじゅ 🫧" },
+    { emo:"🌟", name:"すたぴか",    gift:"でんせつの おうかん 🏆" }
+  ];
+
+  var STAR_PER_LEVEL = 10;   // レベルアップに必要な★
+  var TOTAL_Q = 10;          // 1かいの もんだいすう
+
+  // ===== セーブデータ =====
+  var save = load();
+  function load(){
+    try {
+      var s = JSON.parse(localStorage.getItem("sansuSave"));
+      if (s && typeof s.stars === "number") return s;
+    } catch(e){}
+    return { stars:0, level:1, owned:[0] }; // さいしょから みみっち
+  }
+  function persist(){ try { localStorage.setItem("sansuSave", JSON.stringify(save)); } catch(e){} }
+
+  // ===== DOM =====
+  var $ = function(id){ return document.getElementById(id); };
+  var sections = { home:$("home"), quiz:$("quiz"), result:$("result"), dex:$("dex") };
+  function show(name){
+    for (var k in sections) sections[k].classList.add("hidden");
+    sections[name].classList.remove("hidden");
+  }
+
+  // ===== じょうたい =====
+  var sel = { op:"add", level:"basic" };
+  var quiz = { list:[], idx:0, correct:0, locked:false };
+
+  // ===== ホーム: せんたく =====
+  document.querySelectorAll(".choice").forEach(function(c){
+    c.addEventListener("click", function(){
+      if (c.dataset.op){
+        sel.op = c.dataset.op;
+        markSelected("[data-op]", c);
+      } else if (c.dataset.level){
+        sel.level = c.dataset.level;
+        markSelected("[data-level]", c);
+      }
+    });
+  });
+  function markSelected(sel2, el){
+    document.querySelectorAll(sel2).forEach(function(x){ x.style.boxShadow=""; x.style.transform=""; });
+    el.style.boxShadow = "0 0 0 4px rgba(255,95,162,.35)";
+  }
+  // しょきせんたく ハイライト
+  markSelected("[data-op]", document.querySelector('[data-op="add"]'));
+  markSelected("[data-level]", document.querySelector('[data-level="basic"]'));
+
+  // ===== もんだい せいせい =====
+  function makeQuestion(){
+    var max = sel.level === "basic" ? 10 : 20;
+    var a, b, ans, expr, op;
+    if (sel.op === "add"){
+      op = "+";
+      // こたえが max いない に なるように
+      ans = rand(2, max);
+      a = rand(1, ans-1);
+      b = ans - a;
+      expr = a + " + " + b;
+    } else {
+      op = "－";
+      a = rand(2, max);
+      b = rand(1, a-1);
+      ans = a - b;
+      expr = a + " − " + b;
+    }
+    return { a:a, b:b, op:op, expr:expr, ans:ans };
+  }
+  function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+  function buildQuiz(){
+    quiz.list = [];
+    for (var i=0;i<TOTAL_Q;i++) quiz.list.push(makeQuestion());
+    quiz.idx = 0; quiz.correct = 0; quiz.locked = false;
+  }
+
+  function renderQuestion(){
+    var q = quiz.list[quiz.idx];
+    quiz.locked = false;
+    $("qMode").textContent = (sel.op==="add"?"たしざん":"ひきざん") + "・" + (sel.level==="basic"?"きほん":"はってん");
+    $("qCount").textContent = "もんだい " + (quiz.idx+1) + " / " + TOTAL_Q;
+    var parts = q.expr.split(" ");
+    $("expr").innerHTML = parts[0] + ' <span class="op">'+parts[1]+'</span> ' + parts[2] + ' <span class="eq">=</span> ?';
+    $("qMon").textContent = ["🍓","🌸","⭐","🎀","🍰","🌈","💗","🧁"][quiz.idx % 8];
+    $("feedback").textContent = "";
+    $("feedback").className = "feedback";
+
+    // こたえの せんたくし（せいかい ＋ ダミー2つ）
+    var opts = [q.ans];
+    var max = sel.level === "basic" ? 10 : 20;
+    var guard = 0;
+    while (opts.length < 3 && guard++ < 50){
+      var d = q.ans + rand(-3,3);
+      if (d >= 0 && d <= max && opts.indexOf(d) === -1) opts.push(d);
+    }
+    // たりなければ てきとうに うめる
+    var fill = 0;
+    while (opts.length < 3){ if (opts.indexOf(fill)===-1) opts.push(fill); fill++; }
+    shuffle(opts);
+
+    var box = $("answers");
+    box.innerHTML = "";
+    opts.forEach(function(v){
+      var b = document.createElement("button");
+      b.className = "ans";
+      b.textContent = v;
+      b.addEventListener("click", function(){ pick(b, v, q.ans); });
+      box.appendChild(b);
+    });
+  }
+
+  function pick(btn, val, ans){
+    if (quiz.locked) return;
+    quiz.locked = true;
+    var buttons = $("answers").querySelectorAll(".ans");
+    buttons.forEach(function(b){ b.disabled = true; });
+
+    if (val === ans){
+      btn.classList.add("correct");
+      quiz.correct++;
+      $("feedback").textContent = pickOne(["せいかい！ ✨","すごーい！ 💗","やったね！ 🎀","ぴんぽーん！ 🌟"]);
+      $("feedback").className = "feedback ok";
+      addStar(1, btn);
+      setTimeout(next, 850);
+    } else {
+      btn.classList.add("wrong");
+      // せいかいを ひからせる
+      buttons.forEach(function(b){ if (Number(b.textContent) === ans) b.classList.add("correct"); });
+      $("feedback").textContent = "おしい！ こたえは " + ans + " だよ";
+      $("feedback").className = "feedback ng";
+      setTimeout(next, 1500);
+    }
+  }
+
+  function next(){
+    quiz.idx++;
+    if (quiz.idx >= TOTAL_Q) finish();
+    else renderQuestion();
+  }
+
+  // ===== ★と レベルアップ =====
+  function addStar(n, fromEl){
+    save.stars += n;
+    sparkle(fromEl);
+    // レベルアップ はんてい
+    var needed = save.level * STAR_PER_LEVEL;
+    while (save.stars >= needed && save.level < 99){
+      save.level++;
+      queueGift();
+      needed = save.level * STAR_PER_LEVEL;
+    }
+    persist();
+    updateStatus();
+  }
+
+  var giftQueue = [];
+  function queueGift(){
+    // まだ もっていない モンスターを 1ぴき わたす
+    var next = null;
+    for (var i=0;i<MONSTERS.length;i++){
+      if (save.owned.indexOf(i) === -1){ next = i; break; }
+    }
+    if (next === null) next = "star"; // ぜんぶ もってたら ボーナス★
+    giftQueue.push(next);
+  }
+
+  function flushGifts(cb){
+    if (!giftQueue.length){ if (cb) cb(); return; }
+    var g = giftQueue.shift();
+    showGift(g, function(){ flushGifts(cb); });
+  }
+
+  function showGift(idx, done){
+    var modal = $("giftModal");
+    if (idx === "star"){
+      save.stars += 20;
+      $("giftMon").textContent = "✨";
+      $("giftName").textContent = "";
+      $("giftPresent").textContent = "ボーナス ✨20こ プレゼント！";
+    } else {
+      save.owned.push(idx);
+      var m = MONSTERS[idx];
+      $("giftMon").textContent = m.emo;
+      $("giftName").textContent = m.name;
+      $("giftPresent").textContent = "🎁 プレゼント： " + m.gift;
+    }
+    persist();
+    updateStatus();
+    modal.classList.add("show");
+    confetti();
+    $("giftOk").onclick = function(){
+      modal.classList.remove("show");
+      if (done) done();
+    };
+  }
+
+  // ===== けっか =====
+  function finish(){
+    // レベルアップ プレゼントが あれば みせてから けっかへ
+    flushGifts(function(){
+      show("result");
+      var pct = quiz.correct / TOTAL_Q;
+      var face = pct === 1 ? "🏆" : pct >= 0.7 ? "🎉" : pct >= 0.4 ? "😊" : "💪";
+      $("resFace").textContent = face;
+      $("resScore").textContent = TOTAL_Q + "もん ちゅう " + quiz.correct + "もん せいかい！";
+      $("resSub").textContent = pct === 1 ? "パーフェクト！ てんさいだね 👑"
+                    : pct >= 0.7 ? "とっても じょうず！ 💗"
+                    : "つぎも いっしょに がんばろ！ 🌸";
+      buddySay(pct === 1 ? "すごすぎるよ〜！" : "よく がんばったね！");
+    });
+  }
+
+  // ===== ずかん =====
+  function renderDex(){
+    var grid = $("dexGrid");
+    grid.innerHTML = "";
+    MONSTERS.forEach(function(m, i){
+      var got = save.owned.indexOf(i) !== -1;
+      var d = document.createElement("div");
+      d.className = "dex" + (got ? " got" : "");
+      d.innerHTML = '<div class="df">'+(got?m.emo:"❔")+'</div><div class="dn">'+(got?m.name:"？？？")+'</div>';
+      grid.appendChild(d);
+    });
+  }
+
+  // ===== あいぼう ひょうじ =====
+  function currentBuddy(){
+    var owned = save.owned;
+    var idx = owned[owned.length-1];
+    return MONSTERS[idx] || MONSTERS[0];
+  }
+  function updateBuddy(){
+    var b = currentBuddy();
+    $("buddyFace").textContent = b.emo;
+    $("buddyName").textContent = b.name;
+  }
+  function buddySay(t){ $("buddySpeech").textContent = t; }
+
+  // ===== ステータス こうしん =====
+  function updateStatus(){
+    $("lvNum").textContent = save.level;
+    $("starNum").textContent = save.stars;
+    var base = (save.level-1) * STAR_PER_LEVEL;
+    var needed = save.level * STAR_PER_LEVEL;
+    var pct = Math.max(0, Math.min(100, ((save.stars - base) / (needed - base)) * 100));
+    $("expBar").style.width = pct + "%";
+  }
+
+  // ===== エフェクト =====
+  function sparkle(el){
+    if (!el) return;
+    var r = el.getBoundingClientRect();
+    for (var i=0;i<5;i++){
+      (function(i){
+        var s = document.createElement("span");
+        s.className = "spark";
+        s.textContent = pickOne(["✨","⭐","💗","🌟","🎀"]);
+        s.style.left = (r.left + r.width/2 + rand(-30,30)) + "px";
+        s.style.top  = (r.top + 6) + "px";
+        s.style.animationDelay = (i*0.05) + "s";
+        document.body.appendChild(s);
+        setTimeout(function(){ s.remove(); }, 1200);
+      })(i);
+    }
+  }
+  function confetti(){
+    for (var i=0;i<24;i++){
+      (function(i){
+        var s = document.createElement("span");
+        s.className = "spark";
+        s.textContent = pickOne(["🎉","✨","💗","🎀","⭐","🌸","🧁"]);
+        s.style.left = rand(10, window.innerWidth-30) + "px";
+        s.style.top = (window.innerHeight/2) + "px";
+        s.style.animationDelay = (Math.random()*0.4) + "s";
+        document.body.appendChild(s);
+        setTimeout(function(){ s.remove(); }, 1300);
+      })(i);
+    }
+  }
+
+  function shuffle(a){ for (var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+  function pickOne(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+  // ===== ボタン =====
+  $("startBtn").addEventListener("click", function(){
+    buildQuiz();
+    show("quiz");
+    renderQuestion();
+  });
+  $("againBtn").addEventListener("click", function(){
+    buildQuiz();
+    show("quiz");
+    renderQuestion();
+  });
+  $("homeBtn").addEventListener("click", function(){ updateBuddy(); buddySay("また あそぼうね！"); show("home"); });
+  $("showDexBtn").addEventListener("click", function(){ renderDex(); show("dex"); });
+  $("dexBackBtn").addEventListener("click", function(){ show("home"); });
+
+  // ===== しょきか =====
+  updateStatus();
+  updateBuddy();
+  show("home");
+})();
+</script>
+</body>
+</html>
