@@ -166,7 +166,7 @@
 </head>
 <body>
 <div class="app">
-  <h1>けいさんモンスター<small>✨ ずかんを あつめよう ✨</small></h1>
+  <h1>けいさんモンスター<small>✨ ゆいちゃんの ずかんを あつめよう ✨</small></h1>
 
   <!-- ステータス -->
   <div class="status">
@@ -183,7 +183,7 @@
     <div class="buddy">
       <span class="face" id="buddyFace">🐰</span>
       <div class="name" id="buddyName">みみっち</div>
-      <div class="speech" id="buddySpeech">きょうも いっしょに がんばろ！</div>
+      <div class="speech" id="buddySpeech">ゆいちゃん、きょうも いっしょに がんばろ！</div>
     </div>
 
     <div class="lead">どっちの けいさんを する？</div>
@@ -258,7 +258,7 @@
   <div class="gift">
     <div class="box">🎁</div>
     <h2>レベルアップ！</h2>
-    <div class="gtxt">あたらしい なかまが なかまに なったよ！</div>
+    <div class="gtxt">ゆいちゃんに あたらしい なかまが きたよ！</div>
     <div class="newmon" id="giftMon">🦄</div>
     <div class="name" id="giftName"></div>
     <div class="present" id="giftPresent"></div>
@@ -286,6 +286,8 @@
     { emo:"🌟", name:"すたぴか",    gift:"でんせつの おうかん 🏆" }
   ];
 
+  var PLAYER = "ゆい";       // ★あそぶ こ の なまえ（ここを かえると ぜんぶ かわります）
+  var NAME = PLAYER + "ちゃん";
   var STAR_PER_LEVEL = 10;   // レベルアップに必要な★
   var TOTAL_Q = 10;          // 1かいの もんだいすう
 
@@ -404,7 +406,7 @@
     if (val === ans){
       btn.classList.add("correct");
       quiz.correct++;
-      $("feedback").textContent = pickOne(["せいかい！ ✨","すごーい！ 💗","やったね！ 🎀","ぴんぽーん！ 🌟"]);
+      $("feedback").textContent = pickOne(["せいかい！ ✨","すごーい！ 💗","やったね！ 🎀","ぴんぽーん！ 🌟",NAME+" てんさい！ 👑"]);
       $("feedback").className = "feedback ok";
       addStar(1, btn);
       setTimeout(next, 850);
@@ -489,10 +491,10 @@
       var face = pct === 1 ? "🏆" : pct >= 0.7 ? "🎉" : pct >= 0.4 ? "😊" : "💪";
       $("resFace").textContent = face;
       $("resScore").textContent = TOTAL_Q + "もん ちゅう " + quiz.correct + "もん せいかい！";
-      $("resSub").textContent = pct === 1 ? "パーフェクト！ てんさいだね 👑"
-                    : pct >= 0.7 ? "とっても じょうず！ 💗"
-                    : "つぎも いっしょに がんばろ！ 🌸";
-      buddySay(pct === 1 ? "すごすぎるよ〜！" : "よく がんばったね！");
+      $("resSub").textContent = pct === 1 ? NAME+" パーフェクト！ てんさいだね 👑"
+                    : pct >= 0.7 ? NAME+" とっても じょうず！ 💗"
+                    : NAME+" つぎも いっしょに がんばろ！ 🌸";
+      buddySay(pct === 1 ? NAME+" すごすぎるよ〜！" : NAME+" よく がんばったね！");
     });
   }
 
@@ -583,6 +585,9 @@
   $("dexBackBtn").addEventListener("click", function(){ show("home"); });
 
   // ===== しょきか =====
+  document.querySelector("h1 small").textContent = "✨ " + NAME + "の ずかんを あつめよう ✨";
+  $("buddySpeech").textContent = NAME + "、きょうも いっしょに がんばろ！";
+  $("giftModal").querySelector(".gtxt").textContent = NAME + "に あたらしい なかまが きたよ！";
   updateStatus();
   updateBuddy();
   show("home");
