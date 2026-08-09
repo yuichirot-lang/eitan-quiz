@@ -100,7 +100,12 @@
   .question .expr { font-size: 3.1rem; font-weight:800; color:#6a4a63; letter-spacing: 2px; }
   .question .expr .op { color: var(--pink-deep); }
   .question .expr .eq { color: var(--lav); }
+  .question .expr.word {
+    font-size: 1.15rem; font-weight:700; color:#6a4a63; letter-spacing:0;
+    line-height: 1.85; text-align: left;
+  }
   .question .qmon { font-size: 2rem; margin-top: 6px; }
+  .question .expr.word + .qmon { font-size: 2.6rem; margin-top: 10px; }
 
   /* こたえボタン */
   .answers { display:grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -210,7 +215,7 @@
       <div class="choice advanced" data-level="advanced">
         <span class="emo">👑</span>
         <div class="t">はってん</div>
-        <div class="d">20までの けいさん</div>
+        <div class="d">おはなしの もんだい</div>
       </div>
     </div>
 
@@ -334,9 +339,34 @@
   markSelected("[data-op]", document.querySelector('[data-op="add"]'));
   markSelected("[data-level]", document.querySelector('[data-level="basic"]'));
 
+  // ===== ぶんしょうだい の ざいりょう（ゆいちゃんの すきな キャラ）=====
+  // なまえを かえたい ときは ここを かえてね
+  var NUIGURUMI = [   // ぬいぐるみ／シール など（たべない もの）
+    { n:"ちいかわの ぬいぐるみ",     e:"🧸" },
+    { n:"モモンガの ぬいぐるみ",     e:"🧸" },
+    { n:"ハチワレの ぬいぐるみ",     e:"🧸" },
+    { n:"ポッチャマの ぬいぐるみ",   e:"🐧" },
+    { n:"ポッチャマの シール",       e:"⭐" },
+    { n:"シナモロールの ぬいぐるみ", e:"🐶" },
+    { n:"シナモロールの シール",     e:"⭐" },
+    { n:"ちいかわの シール",         e:"⭐" }
+  ];
+  var OKASHI = [      // たべもの
+    { n:"チョコレート", e:"🍫" },
+    { n:"クッキー",     e:"🍪" },
+    { n:"あめ",         e:"🍬" },
+    { n:"グミ",         e:"🐻" },
+    { n:"ドーナツ",     e:"🍩" },
+    { n:"いちご",       e:"🍓" },
+    { n:"マカロン",     e:"🌈" },
+    { n:"プリン",       e:"🍮" }
+  ];
+  var GIVERS = ["おかあさん","おとうさん","おばあちゃん","おじいちゃん","せんせい"];
+
   // ===== もんだい せいせい =====
   function makeQuestion(){
-    var max = sel.level === "basic" ? 10 : 20;
+    if (sel.level === "advanced") return makeWord();
+    var max = 10;
     var a, b, ans, expr, op;
     if (sel.op === "add"){
       op = "+";
@@ -352,8 +382,46 @@
       ans = a - b;
       expr = a + " − " + b;
     }
-    return { a:a, b:b, op:op, expr:expr, ans:ans };
+    return { type:"eq", a:a, b:b, op:op, expr:expr, ans:ans };
   }
+
+  // ぶんしょうだい（10までの たしざん・ひきざん）
+  function makeWord(){
+    var a, b, ans, text, emo;
+    var giver = pickOne(GIVERS);
+    if (sel.op === "add"){
+      ans = rand(3, 10);          // ぜんぶの かず（10まで）
+      a = rand(1, ans-1);
+      b = ans - a;
+      var it = pickOne(NUIGURUMI); emo = it.e;
+      var ok = pickOne(OKASHI);
+      var adds = [
+        NAME+"は "+it.n+"を "+a+"こ もっていました。"+giver+"が "+b+"こ くれました。ぜんぶで なんこに なったでしょう？",
+        NAME+"は "+it.n+"を "+a+"こ もっています。おともだちから "+b+"こ もらいました。あわせて なんこでしょう？",
+        "テーブルに "+ok.n+"が "+a+"こ あります。"+giver+"が "+b+"こ もってきました。ぜんぶで なんこでしょう？",
+        NAME+"は きのう "+it.n+"を "+a+"こ、きょう "+b+"こ あつめました。ぜんぶで なんこ あつめたでしょう？"
+      ];
+      var pickIdx = rand(0,3);
+      text = adds[pickIdx];
+      if (pickIdx === 2) emo = ok.e;   // おかしの もんだいの ときは おかしの え
+    } else {
+      a = rand(3, 10);            // さいしょの かず
+      b = rand(1, a-1);           // へらす かず
+      ans = a - b;
+      var it2 = pickOne(NUIGURUMI); emo = it2.e;
+      var ok2 = pickOne(OKASHI);
+      var subs = [
+        { t: NAME+"は "+it2.n+"を "+a+"こ もっていました。いもうとの さえちゃんが 「ほしい」と いったので "+b+"こ あげました。いま "+NAME+"は なんこ もっているでしょう？", e: it2.e },
+        { t: "おさらに "+ok2.n+"が "+a+"こ ありました。"+NAME+"が "+b+"こ たべました。のこりは なんこでしょう？", e: ok2.e },
+        { t: NAME+"は "+it2.n+"を "+a+"こ もっていました。おともだちに "+b+"こ あげました。なんこ のこっているでしょう？", e: it2.e },
+        { t: ok2.n+"が "+a+"こ ありました。"+NAME+"と さえちゃんで "+b+"こ たべました。あと なんこ のこっているでしょう？", e: ok2.e }
+      ];
+      var s = pickOne(subs);
+      text = s.t; emo = s.e;
+    }
+    return { type:"word", text:text, emo:emo, ans:ans };
+  }
+
   function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 
   function buildQuiz(){
@@ -365,17 +433,24 @@
   function renderQuestion(){
     var q = quiz.list[quiz.idx];
     quiz.locked = false;
-    $("qMode").textContent = (sel.op==="add"?"たしざん":"ひきざん") + "・" + (sel.level==="basic"?"きほん":"はってん");
+    $("qMode").textContent = (sel.op==="add"?"たしざん":"ひきざん") + "・" + (sel.level==="basic"?"きほん":"おはなし");
     $("qCount").textContent = "もんだい " + (quiz.idx+1) + " / " + TOTAL_Q;
-    var parts = q.expr.split(" ");
-    $("expr").innerHTML = parts[0] + ' <span class="op">'+parts[1]+'</span> ' + parts[2] + ' <span class="eq">=</span> ?';
-    $("qMon").textContent = ["🍓","🌸","⭐","🎀","🍰","🌈","💗","🧁"][quiz.idx % 8];
+    if (q.type === "word"){
+      $("expr").className = "expr word";
+      $("expr").textContent = q.text;
+      $("qMon").textContent = q.emo;
+    } else {
+      $("expr").className = "expr";
+      var parts = q.expr.split(" ");
+      $("expr").innerHTML = parts[0] + ' <span class="op">'+parts[1]+'</span> ' + parts[2] + ' <span class="eq">=</span> ?';
+      $("qMon").textContent = ["🍓","🌸","⭐","🎀","🍰","🌈","💗","🧁"][quiz.idx % 8];
+    }
     $("feedback").textContent = "";
     $("feedback").className = "feedback";
 
     // こたえの せんたくし（せいかい ＋ ダミー2つ）
     var opts = [q.ans];
-    var max = sel.level === "basic" ? 10 : 20;
+    var max = 10;
     var guard = 0;
     while (opts.length < 3 && guard++ < 50){
       var d = q.ans + rand(-3,3);
