@@ -96,6 +96,7 @@
   .cmp-emos { font-size: 1.7rem; line-height:1.25; text-align:left; word-break: break-word; }
   .answers.stack { grid-template-columns: 1fr; }
   .answers.stack .ans { font-size: 1.2rem; padding: 16px 12px; font-weight:800; }
+  .answers.stack.eq .ans { font-size: 1.7rem; letter-spacing: 3px; }
 
   .btn {
     display:block; width:100%; border:none; border-radius:18px; padding:16px;
@@ -463,33 +464,34 @@
     return { type:"word", text:text, emo:emo, ans:ans };
   }
 
-  // くらべっこ（レベル2）：どちらが どれだけ おおい？
+  // くらべっこ（レベル2）：どちらが どれだけ おおい？を しきで あらわす
   function makeCompare(){
     // どうぶつ 2しゅるい を えらぶ
     var pool = ANIMALS.slice(); shuffle(pool);
     var A = pool[0], B = pool[1];
     var c1 = rand(1, 8), c2 = rand(1, 8);
     while (c1 === c2) c2 = rand(1, 8);
-    var winner = c1 > c2 ? A : B;
-    var loser  = c1 > c2 ? B : A;
-    var diff = Math.abs(c1 - c2);
+    var big = Math.max(c1, c2), small = Math.min(c1, c2);
+    var diff = big - small;
 
-    var correct = winner.n + "が " + hiki(diff) + " おおい";
-    // ダミー：むきちがい ＋ かずちがい
+    // せいかい：おおいほう － すくないほう ＝ さ
+    var correct = big + " − " + small + " = " + diff;
     var opts = [correct];
-    var wrongDir = loser.n + "が " + hiki(diff) + " おおい";
-    if (opts.indexOf(wrongDir) === -1) opts.push(wrongDir);
-    var diff2 = diff + (Math.random() < .5 ? 1 : -1);
-    if (diff2 < 1) diff2 = diff + 1;
-    var wrongNum = winner.n + "が " + hiki(diff2) + " おおい";
+    // ダミー1：たしざんに してしまう
+    var wrongAdd = big + " + " + small + " = " + (big + small);
+    if (opts.indexOf(wrongAdd) === -1) opts.push(wrongAdd);
+    // ダミー2：しきは あってるけど こたえが ちがう
+    var wd = diff + (Math.random() < .5 ? 1 : -1);
+    if (wd < 0 || wd === diff) wd = diff + 1;
+    var wrongNum = big + " − " + small + " = " + wd;
     if (opts.indexOf(wrongNum) === -1) opts.push(wrongNum);
     // まだ たりなければ うめる
-    var g = 1;
+    var g = 2;
     while (opts.length < 3){
-      var cand = loser.n + "が " + hiki(diff + g) + " おおい";
+      var cand = big + " − " + small + " = " + (diff + g);
       if (opts.indexOf(cand) === -1) opts.push(cand);
       g++;
-      if (g > 10) break;
+      if (g > 12) break;
     }
     shuffle(opts);
 
@@ -522,7 +524,7 @@
 
     if (q.type === "compare"){
       $("expr").className = "expr word";
-      var html = '<div class="cmp-q">どちらが どれだけ おおいでしょう？</div>';
+      var html = '<div class="cmp-q">どちらが どれだけ おおい？<br>しきで あらわすと どれかな？</div>';
       q.rows.forEach(function(r){
         html += '<div class="cmp-row"><span class="cmp-name">'+r.n+'</span><span class="cmp-emos">'+repeat(r.e, r.c)+'</span></div>';
       });
@@ -530,7 +532,7 @@
       $("qMon").textContent = "🤔";
       options = q.options;
       correctLabel = q.correct;
-      box.className = "answers stack";   // たてに ならべる
+      box.className = "answers stack eq";   // たてに ならべる（すうしき）
     } else if (q.type === "word"){
       $("expr").className = "expr word";
       $("expr").textContent = q.text;
