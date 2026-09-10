@@ -82,7 +82,7 @@ function listComments(room) {
       cls:      String(r[3]),
       num:      String(r[4]),
       name:     String(r[5]),
-      answer:   String(r[6]) === 'no' ? 'no' : 'yes',
+      answer:   String(r[6]),
       text:     String(r[7]),
       likes:    Number(r[8]) || 0,
       clientId: String(r[9])
@@ -102,7 +102,7 @@ function addComment(room, p) {
     cls:      String(p.cls || '').slice(0, 10),
     num:      String(p.num || '').slice(0, 5),
     name:     String(p.name || '').slice(0, 20),
-    answer:   String(p.answer) === 'no' ? 'no' : 'yes',
+    answer:   String(p.answer || ''),   // 使わない場合は空欄
     text:     text,
     likes:    0,
     clientId: String(p.clientId || '').slice(0, 20)

@@ -11,15 +11,17 @@
 
 ## blog.html ―― ブログにコメントしよう（Cafe Maria）
 
-### 授業の流れ（イメージ）
+### 授業の流れ（10分程度のコメント活動）
+
+生徒への指示はすべて英語で表示されます（語句の意味と日本語訳だけ日本語です）。
 
 | | 生徒の活動 | ページの機能 |
 | --- | --- | --- |
-| ① 読む | ブログ記事を読む | 🔊 全文/1文ずつ読み上げ、🐢 ゆっくり再生、📖 語句の意味、🇯🇵 日本語訳 |
-| ② 考える | Kaito の質問 *Do you want to visit this restaurant?* に答える | Yes / No を選ぶボタン |
-| ③ 書く | 英語でコメントを書く | 使える表現チップ（タップで入力）、語数カウント |
-| ④ 読み合う | クラス全員のコメントを読む | Yes / No の人数集計、フィルタ（すべて・Yes・No・自分）、👍 いいね |
+| ① 読む | ブログ記事を読む | 🔊 Listen（全文・1文タップで読み上げ）、🐢 Slow、📖 Word meanings、🇯🇵 日本語訳 |
+| ② 書く | Kaito の質問 *Do you want to visit this restaurant?* にすぐコメントを書く | Class / Number / Name ＋ コメント欄、Useful expressions（タップで入力）、語数カウント |
+| ③ 読み合う | クラス全員のコメントを読む | 件数表示、フィルタ（All / Mine）、並び替え（Newest / Most liked）、👍 Like |
 
+- Yes / No を選ぶステップはありません。生徒は読んだらそのまま英語で書きます。
 - 生徒はログイン不要。URL（または QR コード）を開くだけで使えます。
 - クラス・出席番号・名前は端末に記憶されるので、2 回目からは入力不要です。
 - 20 秒ごとに自動更新されるので、友だちのコメントが次々に表示されます。
@@ -33,6 +35,7 @@ https://<ユーザー名>.github.io/eitan-quiz/blog.html?teacher=1
 ```
 
 - **🖥 提示モード切替** … 入力欄を隠し、文字を大きくします（電子黒板・プロジェクタ用）
+- **⏱ 10分タイマー** … 活動時間のカウントダウン（長さは `CONFIG.MINUTES` で変更）
 - **📋 コメントをコピー（CSV）** … 全コメントをコピー。スプレッドシートにそのまま貼り付けられます
 - **削除** … 各コメントの「削除」（パスコードが必要）
 
@@ -89,8 +92,9 @@ const CONFIG = {
 const CONFIG = {
   BLOGGER: 'Kaito',                                        // 登場人物の名前
   QUESTION_EN: 'Do you want to visit this restaurant?',    // 生徒への質問
-  QUESTION_JA: 'このレストランに行ってみたいですか。…',      // 日本語の補足
-  CHIPS: ['I want to visit it.', 'It looks delicious.'],   // 使える表現（タップで入力）
+  QUESTION_HINT: 'Write your answer in English. ...',      // 書き方の指示（英語）
+  MINUTES: 10,                                             // 活動時間（タイマー）
+  CHIPS: ['Yes, I do.', 'It looks delicious.'],            // 使える表現（タップで入力）
   ...
 };
 ```

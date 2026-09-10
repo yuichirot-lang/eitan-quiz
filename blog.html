@@ -121,13 +121,6 @@
   }
   input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--sea); }
   textarea{ min-height:96px; resize:vertical; line-height:1.7; }
-  .yesno{ display:flex; gap:10px; margin-bottom:12px; }
-  .yesno button{
-    flex:1; padding:16px 10px; border-radius:14px; border:3px solid #e2e8ec; background:#fff;
-    font-size:1.05rem; font-weight:700; cursor:pointer; color:var(--ink); font-family:inherit;
-  }
-  .yesno button[data-a=yes].on{ border-color:var(--yes); background:var(--yes-bg); color:var(--yes); }
-  .yesno button[data-a=no].on{ border-color:var(--no); background:var(--no-bg); color:var(--no); }
   .chips{ display:flex; gap:7px; flex-wrap:wrap; margin-bottom:10px; }
   .chip{
     background:var(--sand); border:2px solid #f0e0c2; color:#7a5c2e; border-radius:999px;
@@ -148,14 +141,10 @@
   .msg.err{ background:#fdecec; color:#c53030; }
 
   /* ===== 集計 ===== */
-  .tally{ display:flex; gap:10px; margin-bottom:14px; }
-  .tally div{ flex:1; border-radius:12px; padding:10px 14px; font-weight:700; }
-  .tally .t-yes{ background:var(--yes-bg); color:var(--yes); }
-  .tally .t-no{ background:var(--no-bg); color:var(--no); }
-  .bar{ height:10px; border-radius:999px; background:#eef3f6; overflow:hidden; display:flex; margin-bottom:16px; }
-  .bar i{ display:block; height:100%; }
-  .bar .b-yes{ background:var(--yes); }
-  .bar .b-no{ background:var(--no); }
+  .count-pill{
+    display:inline-block; background:var(--sea-light); color:var(--sea-dark);
+    border-radius:999px; padding:8px 16px; font-weight:700; margin-bottom:14px;
+  }
 
   .filters{ display:flex; gap:7px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
   .filters button{
@@ -178,9 +167,6 @@
   }
   .comment .who{ font-weight:700; font-size:.92rem; }
   .comment .meta{ font-size:.75rem; color:var(--gray); }
-  .badge{ font-size:.72rem; font-weight:700; border-radius:999px; padding:3px 10px; }
-  .badge.yes{ background:var(--yes-bg); color:var(--yes); }
-  .badge.no{ background:var(--no-bg); color:var(--no); }
   .comment .text{ font-size:1.1rem; line-height:1.7; white-space:pre-wrap; word-break:break-word; }
   .comment .foot{ display:flex; gap:10px; align-items:center; margin-top:10px; }
   .like{
@@ -195,6 +181,8 @@
   .teacher{ background:#2b3945; color:#fff; border-radius:16px; padding:14px 16px; margin-bottom:18px; }
   .teacher h2{ font-size:.95rem; color:#fff; }
   .teacher .btn.ghost{ background:#44586a; color:#fff; }
+  .timer{ font-size:1.1rem; font-weight:700; margin-left:auto; align-self:center; letter-spacing:.03em; }
+  body.projector .timer{ font-size:2rem; }
   .status{ text-align:center; font-size:.78rem; color:var(--gray); margin-top:8px; }
 
   body.projector .article p{ font-size:1.35rem; }
@@ -226,7 +214,9 @@
     <div class="row" style="margin-bottom:0">
       <button class="btn ghost small" onclick="toggleProjector()">🖥 提示モード切替</button>
       <button class="btn ghost small" onclick="copyCsv()">📋 コメントをコピー（CSV）</button>
+      <button class="btn ghost small" onclick="toggleTimer()">⏱ 10分タイマー</button>
       <button class="btn ghost small" onclick="refresh(true)">🔄 最新に更新</button>
+      <span class="timer" id="timer">10:00</span>
     </div>
     <div class="ja-note" style="color:#b9c6d1; margin-top:8px">
       クラスごとに分けたいときは URL に <b>?room=1-1</b> のように付けてください（現在: <span id="room-label"></span>）。
@@ -268,9 +258,9 @@
     </div>
 
     <div class="toolbar" id="reading-tools">
-      <button class="tool" id="btn-read" onclick="readAll()">🔊 全文を聞く</button>
-      <button class="tool" id="btn-slow" onclick="toggleSlow()">🐢 ゆっくり</button>
-      <button class="tool" id="btn-gloss" onclick="toggleGlossary()">📖 語句の意味</button>
+      <button class="tool" id="btn-read" onclick="readAll()">🔊 Listen</button>
+      <button class="tool" id="btn-slow" onclick="toggleSlow()">🐢 Slow</button>
+      <button class="tool" id="btn-gloss" onclick="toggleGlossary()">📖 Word meanings</button>
       <button class="tool" id="btn-ja" onclick="toggleJa()">🇯🇵 日本語訳</button>
     </div>
     <div class="translation hidden" id="translation">
@@ -291,53 +281,43 @@
 
   <!-- ========== ③ コメントを書く ========== -->
   <div class="card" id="form-card">
-    <h2><span class="step">STEP 1</span> あなたのことを教えてね</h2>
-    <div class="row">
+    <h2>💬 Write your comment</h2>
+    <div class="ja-note" id="task-note">Write your answer in English. 1-3 sentences. You have 10 minutes.</div>
+
+    <div class="row" style="margin-top:14px">
       <div class="field" style="flex:0 0 90px">
-        <label for="f-class">クラス</label>
-        <input type="text" id="f-class" inputmode="text" placeholder="1-1" maxlength="6">
+        <label for="f-class">Class</label>
+        <input type="text" id="f-class" placeholder="1-1" maxlength="6">
       </div>
       <div class="field" style="flex:0 0 90px">
-        <label for="f-num">出席番号</label>
+        <label for="f-num">Number</label>
         <input type="number" id="f-num" inputmode="numeric" placeholder="12" min="1" max="50">
       </div>
       <div class="field">
-        <label for="f-name">名前（ローマ字でもOK）</label>
+        <label for="f-name">Name</label>
         <input type="text" id="f-name" placeholder="Taro" maxlength="20">
       </div>
     </div>
 
-    <h2 style="margin-top:20px"><span class="step">STEP 2</span> Yes か No をえらぼう</h2>
-    <div class="yesno">
-      <button type="button" data-a="yes" onclick="pickAnswer('yes')">👍 Yes, I do.</button>
-      <button type="button" data-a="no" onclick="pickAnswer('no')">🤔 No, I don't.</button>
-    </div>
-
-    <h2 style="margin-top:20px"><span class="step">STEP 3</span> 英語でコメントを書こう</h2>
-    <div class="ja-note" style="margin-bottom:8px">使いたい表現をタップすると入力できます。1〜3文でOK！</div>
+    <label style="display:block; font-size:.78rem; color:var(--gray); font-weight:700; margin-bottom:5px" for="f-text">Your comment</label>
+    <textarea id="f-text" placeholder="Yes, I do. I want to eat loco moco. It looks delicious."></textarea>
+    <div class="ja-note" style="margin:10px 0 8px">Useful expressions - tap to use them.</div>
     <div class="chips" id="chips"></div>
-    <textarea id="f-text" placeholder="I want to eat loco moco. It looks delicious."></textarea>
     <div class="formfoot" style="margin-top:10px">
-      <button class="btn" id="btn-send" onclick="submitComment()">コメントを送る</button>
+      <button class="btn" id="btn-send" onclick="submitComment()">Post</button>
       <span class="counter" id="word-counter">0 words</span>
     </div>
     <div id="form-msg"></div>
   </div>
 
-  <!-- ========== ④ みんなのコメント ========== -->
+  <!-- ========== みんなのコメント ========== -->
   <div class="card">
-    <h2><span class="step">STEP 4</span> みんなのコメントを読もう</h2>
-    <div class="tally">
-      <div class="t-yes" id="tally-yes">Yes 0人</div>
-      <div class="t-no" id="tally-no">No 0人</div>
-    </div>
-    <div class="bar"><i class="b-yes" id="bar-yes" style="width:50%"></i><i class="b-no" id="bar-no" style="width:50%"></i></div>
+    <h2>🌺 Everyone's comments</h2>
+    <div class="count-pill" id="count-pill">0 comments</div>
     <div class="filters">
-      <button class="on" data-f="all" onclick="setFilter('all')">すべて</button>
-      <button data-f="yes" onclick="setFilter('yes')">Yes</button>
-      <button data-f="no" onclick="setFilter('no')">No</button>
-      <button data-f="mine" onclick="setFilter('mine')">自分</button>
-      <button data-f="sort" onclick="toggleSort()" id="btn-sort" style="margin-left:auto">🕒 新しい順</button>
+      <button class="on" data-f="all" onclick="setFilter('all')">All</button>
+      <button data-f="mine" onclick="setFilter('mine')">Mine</button>
+      <button data-f="sort" onclick="toggleSort()" id="btn-sort" style="margin-left:auto">🕒 Newest</button>
     </div>
     <div id="comments" aria-live="polite"></div>
     <div class="status" id="status"></div>
@@ -357,17 +337,18 @@ const CONFIG = {
   ROOM: 'default',                                   // ?room=1-1 で上書きできます
   BLOGGER: 'Kaito',                                  // ブログを書いている登場人物
   QUESTION_EN: 'Do you want to visit this restaurant?',
-  QUESTION_JA: 'このレストランに行ってみたいですか。理由も英語で書いてみよう！',
+  QUESTION_HINT: 'Write your answer in English. 1-3 sentences.',
+  MINUTES: 10,                                       // 先生用タイマーの長さ（分）
   CHIPS: [
-    'I want to visit it.',
-    'I want to eat loco moco.',
+    'Yes, I do.',
+    "No, I don't.",
+    'I want to eat ...',
     'It looks delicious.',
-    'I like rice.',
+    'I like ...',
     'I want to see Maria.',
     'I want to talk with Maria.',
     'I want to go to Hawaii.',
-    'I do not like eggs.',
-    'Because'
+    'Because ...'
   ],
   REFRESH_MS: 20000                                  // 自動更新の間隔
 };
@@ -386,7 +367,6 @@ const LS = {
   cid:   'hawaii-blog:cid'
 };
 let comments = [];
-let answer   = null;
 let filter   = 'all';
 let sortBy   = 'new';       // new | like
 let slow     = false;
@@ -435,7 +415,7 @@ const Store = {
     }
     const r = await jsonp({
       action:'add', id:c.id, cls:c.cls, num:c.num, name:c.name,
-      answer:c.answer, text:c.text, clientId:c.clientId
+      text:c.text, clientId:c.clientId
     });
     if (!r || !r.ok) throw new Error((r && r.error) || 'save failed');
     return r.comment || c;
@@ -526,11 +506,6 @@ function showTip(html){
 /* =========================================================================
    書く ―― フォーム
    ========================================================================= */
-function pickAnswer(a){
-  answer = a;
-  document.querySelectorAll('.yesno button').forEach(b => b.classList.toggle('on', b.dataset.a === a));
-}
-
 function insertChip(text){
   const ta = $('f-text');
   const start = ta.selectionStart ?? ta.value.length;
@@ -563,11 +538,10 @@ async function submitComment(){
   const name = $('f-name').value.trim();
   const text = $('f-text').value.trim().replace(/\s+\n/g, '\n');
 
-  if (!cls || !num || !name){ formMsg('err', 'クラス・出席番号・名前を入力してください。'); return; }
-  if (!answer){ formMsg('err', 'Yes か No をえらんでください。'); return; }
-  if (countWords(text) < 2){ formMsg('err', '英語で2語以上のコメントを書いてみよう！'); return; }
+  if (!cls || !num || !name){ formMsg('err', 'Please write your class, number and name.'); return; }
+  if (countWords(text) < 2){ formMsg('err', 'Please write two or more English words.'); return; }
   if (/[ぁ-んァ-ヶ一-龠]/.test(text)){
-    if (!confirm('日本語が入っています。このまま送りますか？\n（英語で書けそうならもう一度チャレンジ！）')) return;
+    if (!confirm('Try to write in English! Do you want to send it anyway?')) return;
   }
 
   localStorage.setItem(LS.me, JSON.stringify({ cls: cls, num: num, name: name }));
@@ -575,25 +549,25 @@ async function submitComment(){
   const c = {
     id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     ts: new Date().toISOString(),
-    cls: cls, num: num, name: name, answer: answer, text: text,
+    cls: cls, num: num, name: name, text: text,
     likes: 0, clientId: clientId
   };
 
   const btn = $('btn-send');
-  btn.disabled = true; btn.textContent = '送信中...';
+  btn.disabled = true; btn.textContent = 'Sending...';
   try {
     const saved = await Store.add(c);
     comments.push(Object.assign({}, c, saved));
     $('f-text').value = '';
     updateCounter();
-    formMsg('ok', '✅ コメントを送りました！ みんなのコメントも読んでみよう。');
+    formMsg('ok', "✅ Posted! Now read your friends' comments.");
     render();
     document.querySelector('#comments').scrollIntoView({ behavior: 'smooth', block: 'start' });
     setTimeout(() => refresh(), 1200);
   } catch(e){
-    formMsg('err', '⚠️ 送れませんでした。Wi-Fiを確かめて、もう一度「コメントを送る」を押してください。');
+    formMsg('err', '⚠️ Could not send. Check the Wi-Fi and push "Post" again.');
   } finally {
-    btn.disabled = false; btn.textContent = 'コメントを送る';
+    btn.disabled = false; btn.textContent = 'Post';
   }
 }
 
@@ -609,11 +583,11 @@ function timeAgo(iso){
   const d = new Date(iso);
   if (isNaN(d)) return '';
   const m = Math.floor((Date.now() - d.getTime()) / 60000);
-  if (m < 1) return 'たった今';
-  if (m < 60) return m + '分前';
+  if (m < 1) return 'just now';
+  if (m < 60) return m + ' min ago';
   const h = Math.floor(m / 60);
-  if (h < 24) return h + '時間前';
-  return d.getMonth() + 1 + '/' + d.getDate();
+  if (h < 24) return h + ' h ago';
+  return (d.getMonth() + 1) + '/' + d.getDate();
 }
 
 function setFilter(f){
@@ -625,7 +599,7 @@ function setFilter(f){
 }
 function toggleSort(){
   sortBy = sortBy === 'new' ? 'like' : 'new';
-  $('btn-sort').textContent = sortBy === 'new' ? '🕒 新しい順' : '👍 いいね順';
+  $('btn-sort').textContent = sortBy === 'new' ? '🕒 Newest' : '👍 Most liked';
   render();
 }
 
@@ -661,17 +635,9 @@ function render(){
   const box = $('comments');
   box.innerHTML = '';
 
-  const yes = comments.filter(c => c.answer === 'yes').length;
-  const no  = comments.filter(c => c.answer === 'no').length;
-  const tot = Math.max(1, yes + no);
-  $('tally-yes').textContent = 'Yes ' + yes + '人';
-  $('tally-no').textContent  = 'No '  + no  + '人';
-  $('bar-yes').style.width = (yes / tot * 100) + '%';
-  $('bar-no').style.width  = (no  / tot * 100) + '%';
+  $('count-pill').textContent = comments.length + (comments.length === 1 ? ' comment' : ' comments');
 
   let list = comments.slice();
-  if (filter === 'yes')  list = list.filter(c => c.answer === 'yes');
-  if (filter === 'no')   list = list.filter(c => c.answer === 'no');
   if (filter === 'mine') list = list.filter(c => c.clientId === clientId);
   list.sort((a, b) => sortBy === 'like'
     ? (b.likes || 0) - (a.likes || 0) || (b.ts > a.ts ? 1 : -1)
@@ -680,7 +646,7 @@ function render(){
   if (!list.length){
     const e = document.createElement('div');
     e.className = 'empty';
-    e.textContent = comments.length ? 'このじょうけんのコメントはまだありません。' : 'まだコメントがありません。いちばんのりで書いてみよう！';
+    e.textContent = comments.length ? 'No comments here yet.' : 'No comments yet. Be the first!';
     box.appendChild(e);
   }
 
@@ -695,11 +661,8 @@ function render(){
     const who = document.createElement('div'); who.className = 'who';
     who.textContent = c.name;
     const meta = document.createElement('div'); meta.className = 'meta';
-    meta.textContent = c.cls + ' ' + c.num + '番 ・ ' + timeAgo(c.ts);
-    const badge = document.createElement('span');
-    badge.className = 'badge ' + (c.answer === 'yes' ? 'yes' : 'no');
-    badge.textContent = c.answer === 'yes' ? "Yes, I do." : "No, I don't.";
-    head.append(icon, who, meta, badge);
+    meta.textContent = c.cls + '  No.' + c.num + '  ・  ' + timeAgo(c.ts);
+    head.append(icon, who, meta);
 
     const text = document.createElement('div'); text.className = 'text';
     text.textContent = c.text;
@@ -707,7 +670,7 @@ function render(){
     const foot = document.createElement('div'); foot.className = 'foot';
     const like = document.createElement('button');
     like.className = 'like' + (liked.has(c.id) ? ' on' : '');
-    like.textContent = '👍 いいね ' + (c.likes || 0);
+    like.textContent = '👍 Like ' + (c.likes || 0);
     like.onclick = () => toggleLike(c.id, like);
     foot.appendChild(like);
     if (IS_TEACHER){
@@ -721,9 +684,9 @@ function render(){
     box.appendChild(card);
   });
 
-  $('status').textContent =
-    (MODE === 'gas' ? '共有モード：みんなのコメントが表示されます' : 'おためしモード：この端末だけに保存されます')
-    + '　/　全 ' + comments.length + ' 件';
+  $('status').textContent = MODE === 'gas'
+    ? 'Shared mode - everyone can read these comments'
+    : 'Demo mode - comments are saved on this device only';
 }
 
 let refreshing = false;
@@ -734,8 +697,8 @@ async function refresh(showError){
     const list = await Store.list();
     comments = list.map(c => ({
       id: String(c.id), ts: c.ts, cls: String(c.cls || ''), num: String(c.num || ''),
-      name: String(c.name || ''), answer: c.answer === 'no' ? 'no' : 'yes',
-      text: String(c.text || ''), likes: Number(c.likes || 0), clientId: String(c.clientId || '')
+      name: String(c.name || ''), text: String(c.text || ''),
+      likes: Number(c.likes || 0), clientId: String(c.clientId || '')
     }));
     render();
   } catch(e){
@@ -749,10 +712,26 @@ async function refresh(showError){
    先生用
    ========================================================================= */
 function toggleProjector(){ document.body.classList.toggle('projector'); }
+
+let timerId = null;
+function toggleTimer(){
+  const el = $('timer');
+  if (timerId){ clearInterval(timerId); timerId = null; el.textContent = CONFIG.MINUTES + ':00'; return; }
+  const end = Date.now() + CONFIG.MINUTES * 60000;
+  tick();
+  timerId = setInterval(tick, 300);
+  function tick(){
+    const left = Math.max(0, end - Date.now());
+    const m = Math.floor(left / 60000);
+    const sec = Math.floor((left % 60000) / 1000);
+    el.textContent = m + ':' + String(sec).padStart(2, '0');
+    if (left <= 0){ clearInterval(timerId); timerId = null; el.textContent = "Time's up!"; }
+  }
+}
 function copyCsv(){
-  const rows = [['クラス','出席番号','名前','Yes/No','コメント','いいね','時刻']];
+  const rows = [['クラス','出席番号','名前','コメント','いいね','時刻']];
   comments.slice().sort((a,b) => a.ts > b.ts ? 1 : -1).forEach(c => {
-    rows.push([c.cls, c.num, c.name, c.answer, c.text.replace(/\n/g, ' '), c.likes || 0, c.ts]);
+    rows.push([c.cls, c.num, c.name, c.text.replace(/\n/g, ' '), c.likes || 0, c.ts]);
   });
   const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
   const done = () => showTip('コピーしました。スプレッドシートに貼り付けられます。');
@@ -773,8 +752,10 @@ function copyCsv(){
 (function init(){
   $('blogger-name').textContent = CONFIG.BLOGGER;
   $('question-en').textContent  = CONFIG.QUESTION_EN;
-  $('question-ja').textContent  = CONFIG.QUESTION_JA;
+  $('question-ja').textContent  = CONFIG.QUESTION_HINT;
   $('room-label').textContent   = CONFIG.ROOM;
+  $('timer').textContent        = CONFIG.MINUTES + ':00';
+  $('task-note').textContent    = 'Write your answer in English. 1-3 sentences. You have ' + CONFIG.MINUTES + ' minutes.';
   if (IS_TEACHER) $('teacher-panel').classList.remove('hidden');
 
   sentences = [...document.querySelectorAll('.sent')];
