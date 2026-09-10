@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life in Hawaii - Cafe Maria | コメントしよう</title>
+<style>
+  :root{
+    --sea:#1b7fb8; --sea-dark:#0d5a86; --sea-light:#e6f4fb;
+    --sand:#fdf3e3; --coral:#ff7043; --ink:#26333d; --gray:#7a8a96;
+    --yes:#2e9e6b; --yes-bg:#e8f7f0; --no:#c1567a; --no-bg:#fdeef3;
+    color-scheme: light;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    font-family:-apple-system,'Hiragino Sans','Yu Gothic','Helvetica Neue',sans-serif;
+    background:linear-gradient(180deg,#cfeaf7 0%,#eaf6fb 260px,#f6f9fb 100%);
+    color:var(--ink); line-height:1.6; padding:16px 16px 60px;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{ max-width:760px; margin:0 auto; }
+  .card{
+    background:#fff; border-radius:20px; padding:22px 20px; margin-bottom:18px;
+    box-shadow:0 6px 24px rgba(20,70,100,.10);
+  }
+  h2{ font-size:1.15rem; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .step{
+    background:var(--sea); color:#fff; font-size:.75rem; font-weight:700;
+    border-radius:999px; padding:3px 10px; white-space:nowrap;
+  }
+  .ja-note{ font-size:.82rem; color:var(--gray); }
+
+  /* ===== ブログ風ヘッダー ===== */
+  .blog{ border-radius:20px; overflow:hidden; box-shadow:0 6px 24px rgba(20,70,100,.14); margin-bottom:18px; background:#fff; }
+  .banner{
+    position:relative; height:150px;
+    background:linear-gradient(180deg,#5eb6e4 0%,#9ad8ee 40%,#2196c9 41%,#0d6491 87%,#efdcb6 88%,#f8ecd2 100%);
+  }
+  .banner h1{
+    position:absolute; left:20px; top:24px; color:#fff; font-size:2.1rem; line-height:1.05;
+    text-shadow:0 3px 10px rgba(0,60,90,.45); letter-spacing:.02em;
+  }
+  .banner .fish{ position:absolute; font-size:1.6rem; animation:swim 9s linear infinite; }
+  .banner .fish.f1{ top:34px; right:150px; }
+  .banner .fish.f2{ top:70px; right:110px; animation-delay:2.5s; }
+  @keyframes swim{ 0%{ transform:translateX(0);} 50%{ transform:translateX(-18px);} 100%{ transform:translateX(0);} }
+  .banner .avatar{
+    position:absolute; right:18px; top:18px; width:74px; height:74px; border-radius:50%;
+    background:#bfe6f7; border:3px solid #fff; display:flex; align-items:center; justify-content:center;
+    font-size:2rem; box-shadow:0 3px 10px rgba(0,0,0,.2);
+  }
+  .blognav{
+    display:flex; align-items:center; gap:18px; background:#7d8fd6; color:#fff;
+    padding:9px 16px; font-size:.85rem; flex-wrap:wrap;
+  }
+  .blognav .search{
+    margin-left:auto; background:#fff; border-radius:999px; padding:4px 12px;
+    color:#aaa; font-size:.8rem; min-width:120px;
+  }
+  .article{ padding:22px 20px 18px; }
+  .article h3{ color:#6b7fd0; font-size:1.15rem; margin-bottom:12px; }
+  .article p{ font-size:1.12rem; line-height:2.0; margin-bottom:14px; letter-spacing:.01em; }
+  .photos{ display:flex; gap:10px; margin:6px 0 16px; }
+  .photo{
+    flex:1; border-radius:12px; height:110px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; font-size:2rem; color:#fff;
+    text-shadow:0 2px 6px rgba(0,0,0,.25);
+  }
+  .photo.beach{ background:linear-gradient(180deg,#8ad6f0 0%,#3aa6d2 62%,#f0dfb8 63%); }
+  .photo.maria{ background:linear-gradient(160deg,#f0a880,#d2694c); }
+  .photo span{ font-size:.72rem; color:#fff; margin-top:6px; text-shadow:0 1px 3px rgba(0,0,0,.45); font-weight:700; }
+  .wordcount{ text-align:right; color:var(--gray); font-size:.8rem; }
+
+  /* 文・語句 */
+  .sent{ cursor:pointer; border-radius:6px; padding:1px 2px; transition:background .2s; }
+  .sent:hover{ background:#fff6d9; }
+  .sent.speaking{ background:#ffe9a8; box-shadow:0 0 0 2px #ffd85e inset; }
+  .gl{ cursor:pointer; }
+  body.glossary-on .gl{ border-bottom:2px dotted var(--coral); }
+  .gl.open{ background:#ffe0d5; border-radius:4px; }
+
+  .toolbar{ display:flex; gap:8px; flex-wrap:wrap; padding:0 20px 18px; }
+  .tool{
+    border:2px solid var(--sea-light); background:var(--sea-light); color:var(--sea-dark);
+    border-radius:999px; padding:8px 14px; font-size:.85rem; font-weight:700; cursor:pointer;
+  }
+  .tool:hover{ filter:brightness(.97); }
+  .tool.active{ background:var(--sea); border-color:var(--sea); color:#fff; }
+  .translation{
+    margin:0 20px 18px; background:var(--sand); border-radius:14px; padding:14px 16px;
+    font-size:.95rem; color:#5b4b33;
+  }
+  .hidden{ display:none !important; }
+
+  /* ===== 質問カード ===== */
+  .question{
+    background:linear-gradient(135deg,#0f6f9e,#1b9fd0); color:#fff;
+    border-radius:20px; padding:20px; margin-bottom:18px; display:flex; gap:14px; align-items:flex-start;
+    box-shadow:0 6px 24px rgba(15,111,158,.3);
+  }
+  .question .face{
+    width:56px; height:56px; border-radius:50%; background:#bfe6f7; flex:0 0 56px;
+    display:flex; align-items:center; justify-content:center; font-size:1.8rem; border:3px solid #fff;
+  }
+  .bubble{ background:#fff; color:var(--ink); border-radius:16px; padding:14px 16px; position:relative; flex:1; }
+  .bubble::before{
+    content:''; position:absolute; left:-9px; top:16px; border:9px solid transparent;
+    border-right-color:#fff; border-left:0;
+  }
+  .bubble .who{ font-size:.78rem; color:var(--sea); font-weight:700; margin-bottom:4px; }
+  .bubble .q{ font-size:1.25rem; font-weight:700; line-height:1.5; }
+  .bubble .q-ja{ font-size:.85rem; color:var(--gray); margin-top:6px; }
+
+  /* ===== フォーム ===== */
+  .row{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .field{ flex:1; min-width:100px; }
+  .field label{ display:block; font-size:.78rem; color:var(--gray); font-weight:700; margin-bottom:5px; }
+  input[type=text], input[type=number], textarea, select{
+    width:100%; padding:12px 14px; border:2px solid #e2e8ec; border-radius:12px;
+    font-size:1rem; font-family:inherit; color:var(--ink); background:#fff;
+  }
+  input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--sea); }
+  textarea{ min-height:96px; resize:vertical; line-height:1.7; }
+  .yesno{ display:flex; gap:10px; margin-bottom:12px; }
+  .yesno button{
+    flex:1; padding:16px 10px; border-radius:14px; border:3px solid #e2e8ec; background:#fff;
+    font-size:1.05rem; font-weight:700; cursor:pointer; color:var(--ink); font-family:inherit;
+  }
+  .yesno button[data-a=yes].on{ border-color:var(--yes); background:var(--yes-bg); color:var(--yes); }
+  .yesno button[data-a=no].on{ border-color:var(--no); background:var(--no-bg); color:var(--no); }
+  .chips{ display:flex; gap:7px; flex-wrap:wrap; margin-bottom:10px; }
+  .chip{
+    background:var(--sand); border:2px solid #f0e0c2; color:#7a5c2e; border-radius:999px;
+    padding:6px 12px; font-size:.85rem; cursor:pointer; font-family:inherit;
+  }
+  .chip:hover{ background:#fbe9c9; }
+  .formfoot{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .btn{
+    border:none; border-radius:14px; padding:15px 26px; font-size:1.05rem; font-weight:700;
+    cursor:pointer; font-family:inherit; background:linear-gradient(135deg,#0f6f9e,#1b9fd0); color:#fff;
+  }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn.small{ padding:8px 14px; font-size:.85rem; border-radius:10px; }
+  .btn.ghost{ background:#eef3f6; color:#54646f; }
+  .counter{ font-size:.85rem; color:var(--gray); }
+  .msg{ font-size:.9rem; font-weight:700; padding:10px 14px; border-radius:12px; margin-top:12px; }
+  .msg.ok{ background:var(--yes-bg); color:var(--yes); }
+  .msg.err{ background:#fdecec; color:#c53030; }
+
+  /* ===== 集計 ===== */
+  .tally{ display:flex; gap:10px; margin-bottom:14px; }
+  .tally div{ flex:1; border-radius:12px; padding:10px 14px; font-weight:700; }
+  .tally .t-yes{ background:var(--yes-bg); color:var(--yes); }
+  .tally .t-no{ background:var(--no-bg); color:var(--no); }
+  .bar{ height:10px; border-radius:999px; background:#eef3f6; overflow:hidden; display:flex; margin-bottom:16px; }
+  .bar i{ display:block; height:100%; }
+  .bar .b-yes{ background:var(--yes); }
+  .bar .b-no{ background:var(--no); }
+
+  .filters{ display:flex; gap:7px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
+  .filters button{
+    border:2px solid #e2e8ec; background:#fff; color:var(--gray); border-radius:999px;
+    padding:6px 14px; font-size:.85rem; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  .filters button.on{ background:var(--sea); border-color:var(--sea); color:#fff; }
+
+  /* ===== コメント ===== */
+  .comment{
+    border:2px solid #eef3f6; border-radius:16px; padding:14px 16px; margin-bottom:12px;
+    background:#fff; animation:pop .3s ease;
+  }
+  @keyframes pop{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none;} }
+  .comment.mine{ border-color:var(--sea); background:#f6fbfe; }
+  .comment .head{ display:flex; align-items:center; gap:9px; margin-bottom:8px; flex-wrap:wrap; }
+  .comment .icon{
+    width:34px; height:34px; border-radius:50%; background:var(--sea-light); color:var(--sea-dark);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.95rem; flex:0 0 34px;
+  }
+  .comment .who{ font-weight:700; font-size:.92rem; }
+  .comment .meta{ font-size:.75rem; color:var(--gray); }
+  .badge{ font-size:.72rem; font-weight:700; border-radius:999px; padding:3px 10px; }
+  .badge.yes{ background:var(--yes-bg); color:var(--yes); }
+  .badge.no{ background:var(--no-bg); color:var(--no); }
+  .comment .text{ font-size:1.1rem; line-height:1.7; white-space:pre-wrap; word-break:break-word; }
+  .comment .foot{ display:flex; gap:10px; align-items:center; margin-top:10px; }
+  .like{
+    border:2px solid #e2e8ec; background:#fff; border-radius:999px; padding:5px 14px;
+    font-size:.85rem; cursor:pointer; font-family:inherit; color:var(--gray); font-weight:700;
+  }
+  .like.on{ background:#fff3e0; border-color:var(--coral); color:var(--coral); }
+  .del{ border:none; background:none; color:#c53030; font-size:.8rem; cursor:pointer; font-family:inherit; }
+  .empty{ text-align:center; color:var(--gray); padding:26px 10px; font-size:.92rem; }
+
+  /* ===== 先生用 ===== */
+  .teacher{ background:#2b3945; color:#fff; border-radius:16px; padding:14px 16px; margin-bottom:18px; }
+  .teacher h2{ font-size:.95rem; color:#fff; }
+  .teacher .btn.ghost{ background:#44586a; color:#fff; }
+  .status{ text-align:center; font-size:.78rem; color:var(--gray); margin-top:8px; }
+
+  body.projector .article p{ font-size:1.35rem; }
+  body.projector .comment .text{ font-size:1.5rem; }
+  body.projector .comment .who{ font-size:1.1rem; }
+  body.projector #form-card, body.projector #reading-tools{ display:none; }
+  body.projector .wrap{ max-width:1100px; }
+
+  /* 用語ポップアップ */
+  .tip{
+    position:fixed; left:50%; transform:translateX(-50%); bottom:18px; z-index:50;
+    background:#26333d; color:#fff; border-radius:14px; padding:12px 18px; max-width:90%;
+    box-shadow:0 8px 30px rgba(0,0,0,.3); font-size:1rem; text-align:center;
+  }
+  .tip b{ color:#ffd85e; }
+  @media (max-width:480px){
+    .banner h1{ font-size:1.6rem; }
+    .article p{ font-size:1.05rem; line-height:1.9; }
+    .photos{ flex-direction:row; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ========== 先生用パネル（URLの最後に ?teacher=1 を付けると表示） ========== -->
+  <div class="teacher hidden" id="teacher-panel">
+    <h2>👩‍🏫 先生用パネル</h2>
+    <div class="row" style="margin-bottom:0">
+      <button class="btn ghost small" onclick="toggleProjector()">🖥 提示モード切替</button>
+      <button class="btn ghost small" onclick="copyCsv()">📋 コメントをコピー（CSV）</button>
+      <button class="btn ghost small" onclick="refresh(true)">🔄 最新に更新</button>
+    </div>
+    <div class="ja-note" style="color:#b9c6d1; margin-top:8px">
+      クラスごとに分けたいときは URL に <b>?room=1-1</b> のように付けてください（現在: <span id="room-label"></span>）。
+    </div>
+  </div>
+
+  <!-- ========== ① ブログを読む ========== -->
+  <div class="blog">
+    <div class="banner">
+      <h1>Life in<br>Hawaii</h1>
+      <div class="fish f1">🐠</div>
+      <div class="fish f2">🐟</div>
+      <div class="avatar">🏄</div>
+    </div>
+    <div class="blognav">
+      <span>▤ Top</span><span>❐ Articles</span><span>◎ Pictures</span>
+      <span class="search">🔍</span>
+    </div>
+
+    <div class="article">
+      <h3>Cafe Maria</h3>
+      <div class="photos">
+        <div class="photo beach">🏝️<span>Honolulu</span></div>
+        <div class="photo maria">👩‍🍳<span>Maria</span></div>
+      </div>
+      <p>
+        <span class="sent">Cafe Maria is my <span class="gl" data-ja="大好きな、お気に入りの">favorite</span> <span class="gl" data-ja="レストラン">restaurant</span> in <span class="gl" data-ja="ホノルル（ハワイの都市）">Honolulu</span>.</span>
+        <span class="sent">The restaurant does not have a <span class="gl" data-ja="ウェブサイト">website</span>, but it is very <span class="gl" data-ja="人気のある">popular</span>.</span>
+        <span class="sent">Maria is the <span class="gl" data-ja="オーナー、経営者">owner</span> of the restaurant.</span>
+        <span class="sent">She does not <span class="gl" data-ja="（言葉を）話す">speak</span> Japanese, but she <span class="gl" data-ja="…についてよく知っている">knows a lot about</span> Japan.</span>
+        <span class="sent">She is <span class="gl" data-ja="親切な、やさしい">kind</span> and <span class="gl" data-ja="人なつっこい、気さくな">friendly</span>.</span>
+      </p>
+      <p>
+        <span class="sent">My favorite <span class="gl" data-ja="料理、皿">dish</span> there is <span class="gl" data-ja="ロコモコ（ハワイの料理）">loco moco</span>.</span>
+        <span class="sent">It is a <span class="gl" data-ja="ビーフパティ（牛肉のハンバーグ）">beef patty</span> and a <span class="gl" data-ja="目玉焼き">fried egg</span> <span class="gl" data-ja="…の上に">on top of</span> <span class="gl" data-ja="ごはん、米">rice</span>.</span>
+        <span class="sent">It is <span class="gl" data-ja="すばらしい">wonderful</span>.</span>
+      </p>
+      <div class="wordcount">[72 words]</div>
+    </div>
+
+    <div class="toolbar" id="reading-tools">
+      <button class="tool" id="btn-read" onclick="readAll()">🔊 全文を聞く</button>
+      <button class="tool" id="btn-slow" onclick="toggleSlow()">🐢 ゆっくり</button>
+      <button class="tool" id="btn-gloss" onclick="toggleGlossary()">📖 語句の意味</button>
+      <button class="tool" id="btn-ja" onclick="toggleJa()">🇯🇵 日本語訳</button>
+    </div>
+    <div class="translation hidden" id="translation">
+      <p style="margin-bottom:8px">カフェ・マリアは、ホノルルにあるぼくのお気に入りのレストランです。そのレストランはウェブサイトを持っていませんが、とても人気があります。マリアさんはそのレストランのオーナーです。彼女は日本語を話しませんが、日本についてよく知っています。彼女は親切でフレンドリーです。</p>
+      <p>そこでのぼくのお気に入りの料理はロコモコです。それは、ごはんの上にのったビーフパティと目玉焼きです。とてもすばらしいです。</p>
+    </div>
+  </div>
+
+  <!-- ========== ② 質問 ========== -->
+  <div class="question">
+    <div class="face">🏄</div>
+    <div class="bubble">
+      <div class="who" id="blogger-name">Kaito</div>
+      <div class="q" id="question-en">Do you want to visit this restaurant?</div>
+      <div class="q-ja" id="question-ja">このレストランに行ってみたいですか。理由も英語で書いてみよう！</div>
+    </div>
+  </div>
+
+  <!-- ========== ③ コメントを書く ========== -->
+  <div class="card" id="form-card">
+    <h2><span class="step">STEP 1</span> あなたのことを教えてね</h2>
+    <div class="row">
+      <div class="field" style="flex:0 0 90px">
+        <label for="f-class">クラス</label>
+        <input type="text" id="f-class" inputmode="text" placeholder="1-1" maxlength="6">
+      </div>
+      <div class="field" style="flex:0 0 90px">
+        <label for="f-num">出席番号</label>
+        <input type="number" id="f-num" inputmode="numeric" placeholder="12" min="1" max="50">
+      </div>
+      <div class="field">
+        <label for="f-name">名前（ローマ字でもOK）</label>
+        <input type="text" id="f-name" placeholder="Taro" maxlength="20">
+      </div>
+    </div>
+
+    <h2 style="margin-top:20px"><span class="step">STEP 2</span> Yes か No をえらぼう</h2>
+    <div class="yesno">
+      <button type="button" data-a="yes" onclick="pickAnswer('yes')">👍 Yes, I do.</button>
+      <button type="button" data-a="no" onclick="pickAnswer('no')">🤔 No, I don't.</button>
+    </div>
+
+    <h2 style="margin-top:20px"><span class="step">STEP 3</span> 英語でコメントを書こう</h2>
+    <div class="ja-note" style="margin-bottom:8px">使いたい表現をタップすると入力できます。1〜3文でOK！</div>
+    <div class="chips" id="chips"></div>
+    <textarea id="f-text" placeholder="I want to eat loco moco. It looks delicious."></textarea>
+    <div class="formfoot" style="margin-top:10px">
+      <button class="btn" id="btn-send" onclick="submitComment()">コメントを送る</button>
+      <span class="counter" id="word-counter">0 words</span>
+    </div>
+    <div id="form-msg"></div>
+  </div>
+
+  <!-- ========== ④ みんなのコメント ========== -->
+  <div class="card">
+    <h2><span class="step">STEP 4</span> みんなのコメントを読もう</h2>
+    <div class="tally">
+      <div class="t-yes" id="tally-yes">Yes 0人</div>
+      <div class="t-no" id="tally-no">No 0人</div>
+    </div>
+    <div class="bar"><i class="b-yes" id="bar-yes" style="width:50%"></i><i class="b-no" id="bar-no" style="width:50%"></i></div>
+    <div class="filters">
+      <button class="on" data-f="all" onclick="setFilter('all')">すべて</button>
+      <button data-f="yes" onclick="setFilter('yes')">Yes</button>
+      <button data-f="no" onclick="setFilter('no')">No</button>
+      <button data-f="mine" onclick="setFilter('mine')">自分</button>
+      <button data-f="sort" onclick="toggleSort()" id="btn-sort" style="margin-left:auto">🕒 新しい順</button>
+    </div>
+    <div id="comments" aria-live="polite"></div>
+    <div class="status" id="status"></div>
+  </div>
+</div>
+<div id="tip-holder"></div>
+
+<script>
+/* =========================================================================
+   設定 ―― ここだけ書きかえれば、他の教材でも使えます
+   ========================================================================= */
+const CONFIG = {
+  /* Google Apps Script のウェブアプリURL（下の apps-script/comments.gs を公開して貼る）
+     空のままだと「この端末だけに保存されるおためしモード」で動きます */
+  GAS_URL: '',
+
+  ROOM: 'default',                                   // ?room=1-1 で上書きできます
+  BLOGGER: 'Kaito',                                  // ブログを書いている登場人物
+  QUESTION_EN: 'Do you want to visit this restaurant?',
+  QUESTION_JA: 'このレストランに行ってみたいですか。理由も英語で書いてみよう！',
+  CHIPS: [
+    'I want to visit it.',
+    'I want to eat loco moco.',
+    'It looks delicious.',
+    'I like rice.',
+    'I want to see Maria.',
+    'I want to talk with Maria.',
+    'I want to go to Hawaii.',
+    'I do not like eggs.',
+    'Because'
+  ],
+  REFRESH_MS: 20000                                  // 自動更新の間隔
+};
+
+/* ---------- URLパラメータ ---------- */
+const QS = new URLSearchParams(location.search);
+if (QS.get('room')) CONFIG.ROOM = QS.get('room');
+const IS_TEACHER = QS.get('teacher') === '1';
+
+/* ---------- 状態 ---------- */
+const MODE = CONFIG.GAS_URL ? 'gas' : 'local';
+const LS = {
+  me:    'hawaii-blog:me',
+  liked: 'hawaii-blog:liked:' + CONFIG.ROOM,
+  data:  'hawaii-blog:data:'  + CONFIG.ROOM,
+  cid:   'hawaii-blog:cid'
+};
+let comments = [];
+let answer   = null;
+let filter   = 'all';
+let sortBy   = 'new';       // new | like
+let slow     = false;
+let pass     = '';          // 先生用パスコード（削除に使用）
+
+const clientId = (function(){
+  let v = localStorage.getItem(LS.cid);
+  if (!v) { v = 'c' + Math.random().toString(36).slice(2, 10); localStorage.setItem(LS.cid, v); }
+  return v;
+})();
+
+const $ = (id) => document.getElementById(id);
+
+/* =========================================================================
+   保存先（Googleスプレッドシート / この端末）
+   ========================================================================= */
+function jsonp(params, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const cb = 'cb_' + Math.random().toString(36).slice(2);
+    const s  = document.createElement('script');
+    const t  = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeoutMs || 15000);
+    function cleanup(){ clearTimeout(t); delete window[cb]; s.remove(); }
+    window[cb] = (data) => { cleanup(); resolve(data); };
+    s.onerror  = () => { cleanup(); reject(new Error('network')); };
+    const q = new URLSearchParams(Object.assign({ room: CONFIG.ROOM, callback: cb }, params));
+    s.src = CONFIG.GAS_URL + '?' + q.toString();
+    document.head.appendChild(s);
+  });
+}
+
+function localRead(){
+  try { return JSON.parse(localStorage.getItem(LS.data) || '[]'); } catch(e){ return []; }
+}
+function localWrite(list){ localStorage.setItem(LS.data, JSON.stringify(list)); }
+
+const Store = {
+  async list(){
+    if (MODE === 'local') return localRead();
+    const r = await jsonp({ action: 'list' });
+    if (!r || !r.ok) throw new Error((r && r.error) || 'list failed');
+    return r.comments || [];
+  },
+  async add(c){
+    if (MODE === 'local'){
+      const list = localRead(); list.push(c); localWrite(list); return c;
+    }
+    const r = await jsonp({
+      action:'add', id:c.id, cls:c.cls, num:c.num, name:c.name,
+      answer:c.answer, text:c.text, clientId:c.clientId
+    });
+    if (!r || !r.ok) throw new Error((r && r.error) || 'save failed');
+    return r.comment || c;
+  },
+  async like(id, delta){
+    if (MODE === 'local'){
+      const list = localRead();
+      const c = list.find(x => x.id === id);
+      if (c) { c.likes = Math.max(0, (c.likes || 0) + delta); localWrite(list); }
+      return;
+    }
+    await jsonp({ action:'like', id:id, delta:String(delta) });
+  },
+  async remove(id){
+    if (MODE === 'local'){
+      localWrite(localRead().filter(x => x.id !== id)); return;
+    }
+    const r = await jsonp({ action:'delete', id:id, pass:pass });
+    if (!r || !r.ok) throw new Error((r && r.error) || 'delete failed');
+  }
+};
+
+/* =========================================================================
+   読む ―― 音声・語句・日本語訳
+   ========================================================================= */
+let sentences = [];
+let speaking  = false;
+
+function speak(text, el){
+  if (!('speechSynthesis' in window)) { showTip('この端末では読み上げが使えません'); return null; }
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  u.rate = slow ? 0.65 : 0.92;
+  if (el){
+    u.onstart = () => el.classList.add('speaking');
+    u.onend   = () => el.classList.remove('speaking');
+    u.onerror = () => el.classList.remove('speaking');
+  }
+  speechSynthesis.speak(u);
+  return u;
+}
+
+function readAll(){
+  if (!('speechSynthesis' in window)) { showTip('この端末では読み上げが使えません'); return; }
+  if (speaking){ speechSynthesis.cancel(); stopReading(); return; }
+  speaking = true;
+  $('btn-read').textContent = '⏹ とめる';
+  $('btn-read').classList.add('active');
+  sentences.forEach((el, i) => {
+    const u = speak(el.textContent.trim(), el);
+    if (u && i === sentences.length - 1) u.onend = () => { el.classList.remove('speaking'); stopReading(); };
+  });
+}
+function stopReading(){
+  speaking = false;
+  $('btn-read').textContent = '🔊 全文を聞く';
+  $('btn-read').classList.remove('active');
+  sentences.forEach(el => el.classList.remove('speaking'));
+}
+function toggleSlow(){
+  slow = !slow;
+  $('btn-slow').classList.toggle('active', slow);
+  if (speaking){ speechSynthesis.cancel(); stopReading(); }
+}
+function toggleGlossary(){
+  const on = document.body.classList.toggle('glossary-on');
+  $('btn-gloss').classList.toggle('active', on);
+  showTip(on ? '<b>点線の語</b>をタップすると意味が出ます' : '');
+}
+function toggleJa(){
+  const on = $('translation').classList.toggle('hidden');
+  $('btn-ja').classList.toggle('active', !on);
+}
+
+let tipTimer = null;
+function showTip(html){
+  const holder = $('tip-holder');
+  holder.innerHTML = '';
+  if (!html) return;
+  const d = document.createElement('div');
+  d.className = 'tip';
+  d.innerHTML = html;
+  holder.appendChild(d);
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(() => { holder.innerHTML = ''; }, 4000);
+}
+
+/* =========================================================================
+   書く ―― フォーム
+   ========================================================================= */
+function pickAnswer(a){
+  answer = a;
+  document.querySelectorAll('.yesno button').forEach(b => b.classList.toggle('on', b.dataset.a === a));
+}
+
+function insertChip(text){
+  const ta = $('f-text');
+  const start = ta.selectionStart ?? ta.value.length;
+  const end   = ta.selectionEnd   ?? ta.value.length;
+  const before = ta.value.slice(0, start);
+  const glue = (before && !/[\s]$/.test(before)) ? ' ' : '';
+  ta.value = before + glue + text + ' ' + ta.value.slice(end);
+  const pos = (before + glue + text + ' ').length;
+  ta.focus();
+  ta.setSelectionRange(pos, pos);
+  updateCounter();
+}
+
+function countWords(s){ return (s.trim().match(/[A-Za-z0-9'’-]+/g) || []).length; }
+function updateCounter(){ $('word-counter').textContent = countWords($('f-text').value) + ' words'; }
+
+function formMsg(kind, text){
+  const el = $('form-msg');
+  if (!kind){ el.innerHTML = ''; return; }
+  el.innerHTML = '';
+  const d = document.createElement('div');
+  d.className = 'msg ' + kind;
+  d.textContent = text;
+  el.appendChild(d);
+}
+
+async function submitComment(){
+  const cls  = $('f-class').value.trim();
+  const num  = $('f-num').value.trim();
+  const name = $('f-name').value.trim();
+  const text = $('f-text').value.trim().replace(/\s+\n/g, '\n');
+
+  if (!cls || !num || !name){ formMsg('err', 'クラス・出席番号・名前を入力してください。'); return; }
+  if (!answer){ formMsg('err', 'Yes か No をえらんでください。'); return; }
+  if (countWords(text) < 2){ formMsg('err', '英語で2語以上のコメントを書いてみよう！'); return; }
+  if (/[ぁ-んァ-ヶ一-龠]/.test(text)){
+    if (!confirm('日本語が入っています。このまま送りますか？\n（英語で書けそうならもう一度チャレンジ！）')) return;
+  }
+
+  localStorage.setItem(LS.me, JSON.stringify({ cls: cls, num: num, name: name }));
+
+  const c = {
+    id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    ts: new Date().toISOString(),
+    cls: cls, num: num, name: name, answer: answer, text: text,
+    likes: 0, clientId: clientId
+  };
+
+  const btn = $('btn-send');
+  btn.disabled = true; btn.textContent = '送信中...';
+  try {
+    const saved = await Store.add(c);
+    comments.push(Object.assign({}, c, saved));
+    $('f-text').value = '';
+    updateCounter();
+    formMsg('ok', '✅ コメントを送りました！ みんなのコメントも読んでみよう。');
+    render();
+    document.querySelector('#comments').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => refresh(), 1200);
+  } catch(e){
+    formMsg('err', '⚠️ 送れませんでした。Wi-Fiを確かめて、もう一度「コメントを送る」を押してください。');
+  } finally {
+    btn.disabled = false; btn.textContent = 'コメントを送る';
+  }
+}
+
+/* =========================================================================
+   読み合う ―― 一覧表示
+   ========================================================================= */
+function likedSet(){
+  try { return new Set(JSON.parse(localStorage.getItem(LS.liked) || '[]')); } catch(e){ return new Set(); }
+}
+function saveLiked(set){ localStorage.setItem(LS.liked, JSON.stringify([...set])); }
+
+function timeAgo(iso){
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const m = Math.floor((Date.now() - d.getTime()) / 60000);
+  if (m < 1) return 'たった今';
+  if (m < 60) return m + '分前';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + '時間前';
+  return d.getMonth() + 1 + '/' + d.getDate();
+}
+
+function setFilter(f){
+  filter = f;
+  document.querySelectorAll('.filters button[data-f]').forEach(b => {
+    if (b.dataset.f !== 'sort') b.classList.toggle('on', b.dataset.f === f);
+  });
+  render();
+}
+function toggleSort(){
+  sortBy = sortBy === 'new' ? 'like' : 'new';
+  $('btn-sort').textContent = sortBy === 'new' ? '🕒 新しい順' : '👍 いいね順';
+  render();
+}
+
+async function toggleLike(id, btn){
+  const set = likedSet();
+  const on  = set.has(id);
+  const c   = comments.find(x => x.id === id);
+  if (!c) return;
+  c.likes = Math.max(0, (c.likes || 0) + (on ? -1 : 1));
+  if (on) set.delete(id); else set.add(id);
+  saveLiked(set);
+  render();
+  try { await Store.like(id, on ? -1 : 1); } catch(e){ /* 次の更新で正しい数に戻ります */ }
+}
+
+async function deleteComment(id){
+  if (MODE === 'gas' && !pass){
+    pass = prompt('先生用パスコードを入力してください') || '';
+    if (!pass) return;
+  }
+  if (!confirm('このコメントを削除しますか？')) return;
+  try {
+    await Store.remove(id);
+    comments = comments.filter(c => c.id !== id);
+    render();
+  } catch(e){
+    pass = '';
+    alert('削除できませんでした。パスコードを確かめてください。');
+  }
+}
+
+function render(){
+  const box = $('comments');
+  box.innerHTML = '';
+
+  const yes = comments.filter(c => c.answer === 'yes').length;
+  const no  = comments.filter(c => c.answer === 'no').length;
+  const tot = Math.max(1, yes + no);
+  $('tally-yes').textContent = 'Yes ' + yes + '人';
+  $('tally-no').textContent  = 'No '  + no  + '人';
+  $('bar-yes').style.width = (yes / tot * 100) + '%';
+  $('bar-no').style.width  = (no  / tot * 100) + '%';
+
+  let list = comments.slice();
+  if (filter === 'yes')  list = list.filter(c => c.answer === 'yes');
+  if (filter === 'no')   list = list.filter(c => c.answer === 'no');
+  if (filter === 'mine') list = list.filter(c => c.clientId === clientId);
+  list.sort((a, b) => sortBy === 'like'
+    ? (b.likes || 0) - (a.likes || 0) || (b.ts > a.ts ? 1 : -1)
+    : (b.ts > a.ts ? 1 : b.ts < a.ts ? -1 : 0));
+
+  if (!list.length){
+    const e = document.createElement('div');
+    e.className = 'empty';
+    e.textContent = comments.length ? 'このじょうけんのコメントはまだありません。' : 'まだコメントがありません。いちばんのりで書いてみよう！';
+    box.appendChild(e);
+  }
+
+  const liked = likedSet();
+  list.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'comment' + (c.clientId === clientId ? ' mine' : '');
+
+    const head = document.createElement('div'); head.className = 'head';
+    const icon = document.createElement('div'); icon.className = 'icon';
+    icon.textContent = (c.name || '?').trim().charAt(0).toUpperCase();
+    const who = document.createElement('div'); who.className = 'who';
+    who.textContent = c.name;
+    const meta = document.createElement('div'); meta.className = 'meta';
+    meta.textContent = c.cls + ' ' + c.num + '番 ・ ' + timeAgo(c.ts);
+    const badge = document.createElement('span');
+    badge.className = 'badge ' + (c.answer === 'yes' ? 'yes' : 'no');
+    badge.textContent = c.answer === 'yes' ? "Yes, I do." : "No, I don't.";
+    head.append(icon, who, meta, badge);
+
+    const text = document.createElement('div'); text.className = 'text';
+    text.textContent = c.text;
+
+    const foot = document.createElement('div'); foot.className = 'foot';
+    const like = document.createElement('button');
+    like.className = 'like' + (liked.has(c.id) ? ' on' : '');
+    like.textContent = '👍 いいね ' + (c.likes || 0);
+    like.onclick = () => toggleLike(c.id, like);
+    foot.appendChild(like);
+    if (IS_TEACHER){
+      const del = document.createElement('button');
+      del.className = 'del'; del.textContent = '削除';
+      del.onclick = () => deleteComment(c.id);
+      foot.appendChild(del);
+    }
+
+    card.append(head, text, foot);
+    box.appendChild(card);
+  });
+
+  $('status').textContent =
+    (MODE === 'gas' ? '共有モード：みんなのコメントが表示されます' : 'おためしモード：この端末だけに保存されます')
+    + '　/　全 ' + comments.length + ' 件';
+}
+
+let refreshing = false;
+async function refresh(showError){
+  if (refreshing) return;
+  refreshing = true;
+  try {
+    const list = await Store.list();
+    comments = list.map(c => ({
+      id: String(c.id), ts: c.ts, cls: String(c.cls || ''), num: String(c.num || ''),
+      name: String(c.name || ''), answer: c.answer === 'no' ? 'no' : 'yes',
+      text: String(c.text || ''), likes: Number(c.likes || 0), clientId: String(c.clientId || '')
+    }));
+    render();
+  } catch(e){
+    if (showError) showTip('更新できませんでした。通信を確かめてください。');
+  } finally {
+    refreshing = false;
+  }
+}
+
+/* =========================================================================
+   先生用
+   ========================================================================= */
+function toggleProjector(){ document.body.classList.toggle('projector'); }
+function copyCsv(){
+  const rows = [['クラス','出席番号','名前','Yes/No','コメント','いいね','時刻']];
+  comments.slice().sort((a,b) => a.ts > b.ts ? 1 : -1).forEach(c => {
+    rows.push([c.cls, c.num, c.name, c.answer, c.text.replace(/\n/g, ' '), c.likes || 0, c.ts]);
+  });
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const done = () => showTip('コピーしました。スプレッドシートに貼り付けられます。');
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(csv).then(done, () => fallback());
+  } else fallback();
+  function fallback(){
+    const ta = document.createElement('textarea');
+    ta.value = csv; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch(e){ showTip('コピーできませんでした'); }
+    ta.remove();
+  }
+}
+
+/* =========================================================================
+   起動
+   ========================================================================= */
+(function init(){
+  $('blogger-name').textContent = CONFIG.BLOGGER;
+  $('question-en').textContent  = CONFIG.QUESTION_EN;
+  $('question-ja').textContent  = CONFIG.QUESTION_JA;
+  $('room-label').textContent   = CONFIG.ROOM;
+  if (IS_TEACHER) $('teacher-panel').classList.remove('hidden');
+
+  sentences = [...document.querySelectorAll('.sent')];
+  sentences.forEach(el => {
+    el.title = 'タップすると読み上げます';
+    el.addEventListener('click', (ev) => {
+      if (ev.target.classList.contains('gl')) return;
+      speechSynthesis.cancel(); stopReading();
+      speak(el.textContent.trim(), el);
+    });
+  });
+  document.querySelectorAll('.gl').forEach(el => {
+    el.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      document.querySelectorAll('.gl.open').forEach(o => o.classList.remove('open'));
+      el.classList.add('open');
+      showTip('<b>' + el.textContent + '</b>　＝　' + el.dataset.ja);
+      setTimeout(() => el.classList.remove('open'), 4000);
+    });
+  });
+
+  const chips = $('chips');
+  CONFIG.CHIPS.forEach(t => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = t;
+    b.onclick = () => insertChip(t);
+    chips.appendChild(b);
+  });
+
+  try {
+    const me = JSON.parse(localStorage.getItem(LS.me) || '{}');
+    if (me.cls)  $('f-class').value = me.cls;
+    if (me.num)  $('f-num').value   = me.num;
+    if (me.name) $('f-name').value  = me.name;
+  } catch(e){}
+
+  $('f-text').addEventListener('input', updateCounter);
+  updateCounter();
+
+  refresh();
+  setInterval(() => { if (!document.hidden) refresh(); }, CONFIG.REFRESH_MS);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+  window.addEventListener('beforeunload', () => speechSynthesis.cancel());
+})();
+</script>
+</body>
+</html>
